@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pearson Correlation Coefficient Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .plot-section {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .plot-container {
+            position: relative;
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #scatterPlot {
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+
+        .plot-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .plot-controls h3 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            background-color: white;
+            color: #333;
+            margin-right: 5px;
+        }
+
+        .btn:hover {
+            background-color: #f0f0f0;
+            border-color: #999;
+        }
+
+        .btn-primary {
+            background-color: #2c5aa0;
+            color: white;
+            border-color: #2c5aa0;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e3f73;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .statistics-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .correlation-display {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .correlation-display::before {
+            display: none;
+        }
+
+        @keyframes shine {
+            /* Remove animation for better Moodle compatibility */
+        }
+
+        .correlation-value {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .correlation-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .interpretation {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .interpretation h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .strength-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .strength-weak { background: #fee2e2; color: #dc2626; }
+        .strength-moderate { background: #fef3c7; color: #d97706; }
+        .strength-strong { background: #dcfce7; color: #16a34a; }
+
+        .statistics-details {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .statistics-details h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e6ed;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .preset-datasets {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .preset-datasets h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .dataset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .dataset-btn {
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .dataset-btn:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        .equation-display {
+            background: #f8f9ff;
+            border-left: 4px solid #4facfe;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .dataset-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .correlation-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pearson Correlation Coefficient Explorer</h1>
+            <p>Explore the relationship between two numerical variables</p>
+        </div>
+
+        <div class="main-content">
+            <div class="plot-section">
+                <div class="plot-controls">
+                    <h3>📊 Interactive Scatter Plot</h3>
+                    <div class="control-buttons">
+                        <button class="btn" onclick="clearData()">Clear All</button>
+                        <button class="btn" onclick="removeLastPoint()">Remove Last</button>
+                        <button class="btn btn-primary" onclick="generateRandomData()">Random Data</button>
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <strong>Instructions:</strong> Click anywhere on the plot to add data points. Drag existing points to move them. Watch how the correlation coefficient changes in real-time!
+                </div>
+
+                <div class="plot-container">
+                    <canvas id="scatterPlot" width="600" height="400"></canvas>
+                </div>
+
+                <div class="equation-display">
+                    <div class="equation">
+                        <strong>Pearson Correlation Coefficient Formula:</strong>
+                    </div>
+                    <div class="equation">
+                        r = Σ[(xᵢ - x̄)(yᵢ - ȳ)] / √[Σ(xᵢ - x̄)² × Σ(yᵢ - ȳ)²]
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        Where x̄ and ȳ are the means of variables X and Y
+                    </div>
+                </div>
+            </div>
+
+            <div class="statistics-panel">
+                <div class="correlation-display">
+                    <div class="correlation-value" id="correlationValue">0.00</div>
+                    <div class="correlation-label">Correlation Coefficient (r)</div>
+                </div>
+
+                <div class="interpretation">
+                    <h3>🔍 Relationship Strength</h3>
+                    <div id="strengthIndicator" class="strength-indicator strength-weak">
+                        <span>📊</span>
+                        <span id="strengthText">No correlation</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        <strong>Direction:</strong> <span id="directionText">None</span><br>
+                        <strong>Linearity:</strong> <span id="linearityText">No clear pattern</span>
+                    </div>
+                </div>
+
+                <div class="statistics-details">
+                    <h3>📈 Statistical Details</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Number of Points:</span>
+                        <span class="stat-value" id="nPoints">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mean X:</span>
+                        <span class="stat-value" id="meanX">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mean Y:</span>
+                        <span class="stat-value" id="meanY">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Standard Deviation X:</span>
+                        <span class="stat-value" id="sdX">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Standard Deviation Y:</span>
+                        <span class="stat-value" id="sdY">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">R-squared (r²):</span>
+                        <span class="stat-value" id="rSquared">--</span>
+                    </div>
+                </div>
+
+                <div class="preset-datasets">
+                    <h3>📋 Sample Datasets</h3>
+                    <div class="dataset-grid">
+                        <button class="dataset-btn" onclick="loadDataset('strong_positive')">Strong Positive<br>(r ≈ 0.9)</button>
+                        <button class="dataset-btn" onclick="loadDataset('strong_negative')">Strong Negative<br>(r ≈ -0.9)</button>
+                        <button class="dataset-btn" onclick="loadDataset('moderate_positive')">Moderate Positive<br>(r ≈ 0.6)</button>
+                        <button class="dataset-btn" onclick="loadDataset('weak_positive')">Weak Positive<br>(r ≈ 0.3)</button>
+                        <button class="dataset-btn" onclick="loadDataset('no_correlation')">No Correlation<br>(r ≈ 0.0)</button>
+                        <button class="dataset-btn" onclick="loadDataset('curvilinear')">Curvilinear<br>(r ≈ 0.0)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('scatterPlot');
+        let ctx = canvas.getContext('2d');
+        let points = [];
+        let dragIndex = -1;
+        let isDragging = false;
+
+        // Canvas settings
+        const margin = 40;
+        const plotWidth = canvas.width - 2 * margin;
+        const plotHeight = canvas.height - 2 * margin;
+
+        // Scale settings
+        let xMin = 0, xMax = 10, yMin = 0, yMax = 10;
+
+        function drawAxes() {
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.stroke();
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, canvas.height - margin);
+            ctx.stroke();
+            
+            // Grid lines
+            ctx.strokeStyle = '#f0f0f0';
+            for (let i = 1; i <= 9; i++) {
+                // Vertical grid lines
+                let x = margin + (i / 10) * plotWidth;
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, canvas.height - margin);
+                ctx.stroke();
+                
+                // Horizontal grid lines
+                let y = margin + (i / 10) * plotHeight;
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(canvas.width - margin, y);
+                ctx.stroke();
+            }
+            
+            // Axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            
+            // X-axis labels
+            for (let i = 0; i <= 10; i += 2) {
+                let x = margin + (i / 10) * plotWidth;
+                ctx.fillText(i.toString(), x, canvas.height - margin + 20);
+            }
+            
+            // Y-axis labels
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 10; i += 2) {
+                let y = canvas.height - margin - (i / 10) * plotHeight;
+                ctx.fillText(i.toString(), margin - 10, y + 4);
+            }
+            
+            // Axis titles
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Variable X', canvas.width / 2, canvas.height - 5);
+            
+            ctx.save();
+            ctx.translate(15, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Variable Y', 0, 0);
+            ctx.restore();
+        }
+
+        function drawRegressionLine() {
+            if (points.length < 2) return;
+            
+            const r = calculateCorrelation();
+            if (Math.abs(r) < 0.01) return;
+            
+            const meanX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+            const meanY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+            
+            const sumXY = points.reduce((sum, p) => sum + (p.x - meanX) * (p.y - meanY), 0);
+            const sumX2 = points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0);
+            
+            const slope = sumXY / sumX2;
+            const intercept = meanY - slope * meanX;
+            
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            ctx.beginPath();
+            const x1 = xMin;
+            const y1 = slope * x1 + intercept;
+            const x2 = xMax;
+            const y2 = slope * x2 + intercept;
+            
+            const canvasX1 = margin + ((x1 - xMin) / (xMax - xMin)) * plotWidth;
+            const canvasY1 = canvas.height - margin - ((y1 - yMin) / (yMax - yMin)) * plotHeight;
+            const canvasX2 = margin + ((x2 - xMin) / (xMax - xMin)) * plotWidth;
+            const canvasY2 = canvas.height - margin - ((y2 - yMin) / (yMax - yMin)) * plotHeight;
+            
+            ctx.moveTo(canvasX1, canvasY1);
+            ctx.lineTo(canvasX2, canvasY2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawPoints() {
+            points.forEach((point, index) => {
+                const canvasX = margin + ((point.x - xMin) / (xMax - xMin)) * plotWidth;
+                const canvasY = canvas.height - margin - ((point.y - yMin) / (yMax - yMin)) * plotHeight;
+                
+                ctx.fillStyle = '#4facfe';
+                ctx.strokeStyle = '#2980b9';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.arc(canvasX, canvasY, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            });
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAxes();
+            drawRegressionLine();
+            drawPoints();
+        }
+
+        function canvasToData(canvasX, canvasY) {
+            const x = xMin + ((canvasX - margin) / plotWidth) * (xMax - xMin);
+            const y = yMax - ((canvasY - margin) / plotHeight) * (yMax - yMin);
+            return { x: Math.max(xMin, Math.min(xMax, x)), y: Math.max(yMin, Math.min(yMax, y)) };
+        }
+
+        function dataToCanvas(x, y) {
+            const canvasX = margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+            const canvasY = canvas.height - margin - ((y - yMin) / (yMax - yMin)) * plotHeight;
+            return { x: canvasX, y: canvasY };
+        }
+
+        function getPointAt(canvasX, canvasY) {
+            for (let i = 0; i < points.length; i++) {
+                const point = dataToCanvas(points[i].x, points[i].y);
+                const distance = Math.sqrt((canvasX - point.x) ** 2 + (canvasY - point.y) ** 2);
+                if (distance <= 8) return i;
+            }
+            return -1;
+        }
+
+        function calculateCorrelation() {
+            if (points.length < 2) return 0;
+            
+            const n = points.length;
+            const meanX = points.reduce((sum, p) => sum + p.x, 0) / n;
+            const meanY = points.reduce((sum, p) => sum + p.y, 0) / n;
+            
+            let numerator = 0;
+            let sumX2 = 0;
+            let sumY2 = 0;
+            
+            points.forEach(point => {
+                const dx = point.x - meanX;
+                const dy = point.y - meanY;
+                numerator += dx * dy;
+                sumX2 += dx * dx;
+                sumY2 += dy * dy;
+            });
+            
+            const denominator = Math.sqrt(sumX2 * sumY2);
+            return denominator === 0 ? 0 : numerator / denominator;
+        }
+
+        function updateStatistics() {
+            const n = points.length;
+            const r = calculateCorrelation();
+            
+            document.getElementById('correlationValue').textContent = r.toFixed(3);
+            document.getElementById('nPoints').textContent = n;
+            
+            if (n >= 2) {
+                const meanX = points.reduce((sum, p) => sum + p.x, 0) / n;
+                const meanY = points.reduce((sum, p) => sum + p.y, 0) / n;
+                const sdX = Math.sqrt(points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0) / (n - 1));
+                const sdY = Math.sqrt(points.reduce((sum, p) => sum + (p.y - meanY) ** 2, 0) / (n - 1));
+                
+                document.getElementById('meanX').textContent = meanX.toFixed(2);
+                document.getElementById('meanY').textContent = meanY.toFixed(2);
+                document.getElementById('sdX').textContent = sdX.toFixed(2);
+                document.getElementById('sdY').textContent = sdY.toFixed(2);
+                document.getElementById('rSquared').textContent = (r * r).toFixed(3);
+            } else {
+                document.getElementById('meanX').textContent = '--';
+                document.getElementById('meanY').textContent = '--';
+                document.getElementById('sdX').textContent = '--';
+                document.getElementById('sdY').textContent = '--';
+                document.getElementById('rSquared').textContent = '--';
+            }
+            
+            // Update interpretation
+            const strengthIndicator = document.getElementById('strengthIndicator');
+            const strengthText = document.getElementById('strengthText');
+            const directionText = document.getElementById('directionText');
+            const linearityText = document.getElementById('linearityText');
+            
+            const absR = Math.abs(r);
+            
+            // Strength
+            if (absR < 0.3) {
+                strengthIndicator.className = 'strength-indicator strength-weak';
+                strengthText.textContent = 'Weak or no correlation';
+            } else if (absR < 0.7) {
+                strengthIndicator.className = 'strength-indicator strength-moderate';
+                strengthText.textContent = 'Moderate correlation';
+            } else {
+                strengthIndicator.className = 'strength-indicator strength-strong';
+                strengthText.textContent = 'Strong correlation';
+            }
+            
+            // Direction
+            if (r > 0.1) {
+                directionText.textContent = 'Positive (as X increases, Y tends to increase)';
+            } else if (r < -0.1) {
+                directionText.textContent = 'Negative (as X increases, Y tends to decrease)';
+            } else {
+                directionText.textContent = 'No clear direction';
+            }
+            
+            // Linearity
+            if (absR > 0.5) {
+                linearityText.textContent = 'Strong linear relationship';
+            } else if (absR > 0.3) {
+                linearityText.textContent = 'Moderate linear relationship';
+            } else {
+                linearityText.textContent = 'Weak or no linear relationship';
+            }
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousedown', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            
+            dragIndex = getPointAt(canvasX, canvasY);
+            
+            if (dragIndex !== -1) {
+                isDragging = true;
+                canvas.style.cursor = 'grabbing';
+            } else {
+                // Add new point
+                const dataPoint = canvasToData(canvasX, canvasY);
+                points.push(dataPoint);
+                redraw();
+                updateStatistics();
+            }
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            
+            if (isDragging && dragIndex !== -1) {
+                const dataPoint = canvasToData(canvasX, canvasY);
+                points[dragIndex] = dataPoint;
+                redraw();
+                updateStatistics();
+            } else {
+                // Update cursor
+                const pointIndex = getPointAt(canvasX, canvasY);
+                canvas.style.cursor = pointIndex !== -1 ? 'grab' : 'crosshair';
+            }
+        });
+
+        canvas.addEventListener('mouseup', function() {
+            isDragging = false;
+            dragIndex = -1;
+            canvas.style.cursor = 'crosshair';
+        });
+
+        // Control functions
+        function clearData() {
+            points = [];
+            redraw();
+            updateStatistics();
+        }
+
+        function removeLastPoint() {
+            if (points.length > 0) {
+                points.pop();
+                redraw();
+                updateStatistics();
+            }
+        }
+
+        function generateRandomData() {
+            points = [];
+            const n = 15 + Math.floor(Math.random() * 10);
+            const targetR = (Math.random() - 0.5) * 1.8; // Random correlation between -0.9 and 0.9
+            
+            for (let i = 0; i < n; i++) {
+                const x = 1 + Math.random() * 8;
+                const baseY = 5 + targetR * 2 * (x - 5);
+                const noise = (Math.random() - 0.5) * (3 - Math.abs(targetR) * 2);
+                const y = Math.max(0.5, Math.min(9.5, baseY + noise));
+                points.push({ x, y });
+            }
+            
+            redraw();
+            updateStatistics();
+        }
+
+        function loadDataset(type) {
+            points = [];
+            
+            switch (type) {
+                case 'strong_positive':
+                    for (let i = 0; i < 20; i++) {
+                        const x = 1 + Math.random() * 8;
+                        const y = 0.5 + x * 0.9 + (Math.random() - 0.5) * 1;
+                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+                    }
+                    break;
+                    
+                case 'strong_negative':
+                    for (let i = 0; i < 20; i++) {
+                        const x = 1 + Math.random() * 8;
+                        const y = 9.5 - x * 0.9 + (Math.random() - 0.5) * 1;
+                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+                    }
+                    break;
+                    
+                case 'moderate_positive':
+                    for (let i = 0; i < 25; i++) {
+                        const x = 1 + Math.random() * 8;
+                        const y = 2 + x * 0.5 + (Math.random() - 0.5) * 3;
+                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+                    }
+                    break;
+                    
+                case 'weak_positive':
+                    for (let i = 0; i < 30; i++) {
+                        const x = 1 + Math.random() * 8;
+                        const y = 3 + x * 0.2 + (Math.random() - 0.5) * 4;
+                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+                    }
+                    break;
+                    
+                case 'no_correlation':
+                    for (let i = 0; i < 25; i++) {
+                        const x = 1 + Math.random() * 8;
+                        const y = 2 + Math.random() * 6;
+                        points.push({ x, y });
+                    }
+                    break;
+                    
+                case 'curvilinear':
+                    for (let i = 0; i < 25; i++) {
+                        const x = 1 + Math.random() * 8;
+                        // Create inverted U-shape (parabola): high correlation but r ≈ 0
+                        const y = 5 + 3 * Math.sin(((x - 1) / 8) * Math.PI) + (Math.random() - 0.5) * 1.2;
+                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+                    }
+                    break;
+            }
+            
+            redraw();
+            updateStatistics();
+        }
+
+        // Initialize
+        redraw();
+        updateStatistics();
+    </script>
+</body>
+</html>

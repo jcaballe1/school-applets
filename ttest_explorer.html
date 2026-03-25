@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Group T-Test Comparison Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .visualization-section {
+            display: table-cell;
+            width: 70%;
+            padding: 20px;
+            vertical-align: top;
+        }
+
+        .controls-section {
+            display: table-cell;
+            width: 30%;
+            background-color: #f9f9f9;
+            padding: 20px;
+            vertical-align: top;
+        }
+
+        .plot-container {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .plot-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        canvas {
+            border-radius: 6px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .hypothesis-display {
+            background-color: #f0f8ff;
+            border: 1px solid #b0d4f1;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .hypothesis-display h3 {
+            color: #2c5aa0;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .control-item span {
+            font-size: 0.9rem;
+        }
+
+        .slider-value {
+            background-color: #e8f4fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #2c5aa0;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            margin: 8px 0 15px 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2c5aa0;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2c5aa0;
+            cursor: pointer;
+            border: none;
+        }
+
+        .results-display {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .results-display h3 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: #2c5aa0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .p-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .significant {
+            color: #d9534f;
+        }
+
+        .not-significant {
+            color: #5cb85c;
+        }
+
+        .assumptions {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .assumptions h3 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+        }
+
+        .assumption-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .status-ok {
+            color: #5cb85c;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: #f0ad4e;
+            font-weight: bold;
+        }
+
+        .preset-scenarios {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .preset-scenarios h3 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+        }
+
+        .scenario-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.2s;
+        }
+
+        .scenario-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .scenario-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .formula {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                display: block;
+            }
+            
+            .visualization-section,
+            .controls-section {
+                display: block;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Two-Group T-Test Comparison Explorer</h1>
+            <p>Understand how t-tests compare the means of two independent groups</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="visualization-section">
+                <div class="hypothesis-display">
+                    <h3>📊 Hypotheses</h3>
+                    <p>
+                        <strong>H₀ (Null):</strong> μ₁ = μ₂ (No difference between group means)
+                    </p>
+                    <p>
+                        <strong>H₁ (Alternative):</strong> μ₁ ≠ μ₂ (There is a difference between group means)
+                    </p>
+                </div>
+                
+                <div class="plot-container">
+                    <div class="plot-title">Group Distributions Comparison</div>
+                    <canvas id="groupsPlot" width="800" height="300"></canvas>
+                </div>
+                
+                <div class="plot-container">
+                    <div class="plot-title">T-Distribution with Test Statistic</div>
+                    <canvas id="tDistPlot" width="800" height="300"></canvas>
+                </div>
+                
+                <div class="formula">
+                    <strong>Welch's t-test formula:</strong><br>
+                    t = (x̄₁ - x̄₂) / √[(s₁²/n₁) + (s₂²/n₂)]<br>
+                    <small>where x̄ = sample mean, s² = sample variance, n = sample size</small>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <div class="controls">
+                    <div class="control-group">
+                        <h3>🔵 Group 1 Parameters</h3>
+                        <div class="control-item">
+                            <span>Mean (μ₁)</span>
+                            <span class="slider-value" id="mean1-value">50</span>
+                        </div>
+                        <input type="range" id="mean1" class="slider" min="0" max="100" step="1" value="50">
+                        
+                        <div class="control-item">
+                            <span>Standard Deviation (σ₁)</span>
+                            <span class="slider-value" id="sd1-value">10</span>
+                        </div>
+                        <input type="range" id="sd1" class="slider" min="1" max="20" step="1" value="10">
+                        
+                        <div class="control-item">
+                            <span>Sample Size (n₁)</span>
+                            <span class="slider-value" id="n1-value">30</span>
+                        </div>
+                        <input type="range" id="n1" class="slider" min="10" max="100" step="5" value="30">
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>🔴 Group 2 Parameters</h3>
+                        <div class="control-item">
+                            <span>Mean (μ₂)</span>
+                            <span class="slider-value" id="mean2-value">55</span>
+                        </div>
+                        <input type="range" id="mean2" class="slider" min="0" max="100" step="1" value="55">
+                        
+                        <div class="control-item">
+                            <span>Standard Deviation (σ₂)</span>
+                            <span class="slider-value" id="sd2-value">12</span>
+                        </div>
+                        <input type="range" id="sd2" class="slider" min="1" max="20" step="1" value="12">
+                        
+                        <div class="control-item">
+                            <span>Sample Size (n₂)</span>
+                            <span class="slider-value" id="n2-value">35</span>
+                        </div>
+                        <input type="range" id="n2" class="slider" min="10" max="100" step="5" value="35">
+                    </div>
+                </div>
+                
+                <div class="results-display">
+                    <h3>📈 Test Results</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">t-statistic:</span>
+                        <span class="stat-value" id="t-stat">-1.23</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Degrees of freedom:</span>
+                        <span class="stat-value" id="df">63</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">p-value:</span>
+                        <span class="stat-value p-value" id="p-value">0.223</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Effect size (Cohen's d):</span>
+                        <span class="stat-value" id="effect-size">0.31</span>
+                    </div>
+                </div>
+                
+                <div class="assumptions">
+                    <h3>✅ Assumptions Check</h3>
+                    <div class="assumption-item">
+                        <span>Independence</span>
+                        <span class="status-ok">✓ Assumed</span>
+                    </div>
+                    <div class="assumption-item">
+                        <span>Normality</span>
+                        <span class="status-ok">✓ Assumed</span>
+                    </div>
+                    <div class="assumption-item">
+                        <span>Equal Variances</span>
+                        <span id="variance-status" class="status-ok">✓ Using Welch's</span>
+                    </div>
+                </div>
+
+                <div class="preset-scenarios">
+                    <h3>📋 Example Scenarios</h3>
+                    <button class="scenario-btn" onclick="loadScenario('no_difference')">
+                        <strong>No Difference:</strong> μ₁=50, μ₂=50<br>
+                        <small>Perfect null hypothesis example</small>
+                    </button>
+                    <button class="scenario-btn" onclick="loadScenario('clear_difference')">
+                        <strong>Clear Difference:</strong> μ₁=45, μ₂=60<br>
+                        <small>Large effect, high power</small>
+                    </button>
+                    <button class="scenario-btn" onclick="loadScenario('small_samples')">
+                        <strong>Small Samples:</strong> n₁=12, n₂=15<br>
+                        <small>Large effect, low power</small>
+                    </button>
+                    <button class="scenario-btn" onclick="loadScenario('large_samples')">
+                        <strong>Large Samples:</strong> n₁=80, n₂=85<br>
+                        <small>Small effect, high power</small>
+                    </button>
+                    <button class="scenario-btn" onclick="loadScenario('unequal_variances')">
+                        <strong>Unequal Variances:</strong> σ₁=8, σ₂=18<br>
+                        <small>Why we use Welch's t-test</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get canvas contexts
+        const groupsCanvas = document.getElementById('groupsPlot');
+        const groupsCtx = groupsCanvas.getContext('2d');
+        const tDistCanvas = document.getElementById('tDistPlot');
+        const tDistCtx = tDistCanvas.getContext('2d');
+
+        // Normal distribution function
+        function normalPDF(x, mean, sd) {
+            return (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / sd, 2));
+        }
+
+        // T-distribution function (approximation)
+        function tPDF(x, df) {
+            const gamma1 = gammaFunction((df + 1) / 2);
+            const gamma2 = gammaFunction(df / 2);
+            const coefficient = gamma1 / (Math.sqrt(df * Math.PI) * gamma2);
+            return coefficient * Math.pow(1 + (x * x) / df, -(df + 1) / 2);
+        }
+
+        // Gamma function approximation
+        function gammaFunction(z) {
+            // Stirling's approximation for gamma function
+            if (z < 0.5) {
+                return Math.PI / (Math.sin(Math.PI * z) * gammaFunction(1 - z));
+            }
+            z -= 1;
+            const g = 7;
+            const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                      771.32342877765313, -176.61502916214059, 12.507343278686905,
+                      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+            
+            let x = c[0];
+            for (let i = 1; i < g + 2; i++) {
+                x += c[i] / (z + i);
+            }
+            const t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, (z + 0.5)) * Math.exp(-t) * x;
+        }
+
+        // Calculate Welch's t-test
+        function calculateTTest() {
+            const mean1 = parseFloat(document.getElementById('mean1').value);
+            const mean2 = parseFloat(document.getElementById('mean2').value);
+            const sd1 = parseFloat(document.getElementById('sd1').value);
+            const sd2 = parseFloat(document.getElementById('sd2').value);
+            const n1 = parseFloat(document.getElementById('n1').value);
+            const n2 = parseFloat(document.getElementById('n2').value);
+
+            const se1 = (sd1 * sd1) / n1;
+            const se2 = (sd2 * sd2) / n2;
+            const sePooled = Math.sqrt(se1 + se2);
+            
+            const tStat = (mean1 - mean2) / sePooled;
+            
+            // Welch's degrees of freedom
+            const df = Math.pow(se1 + se2, 2) / (Math.pow(se1, 2) / (n1 - 1) + Math.pow(se2, 2) / (n2 - 1));
+            
+            // Effect size (Cohen's d)
+            const pooledSD = Math.sqrt(((n1 - 1) * sd1 * sd1 + (n2 - 1) * sd2 * sd2) / (n1 + n2 - 2));
+            const cohensD = (mean1 - mean2) / pooledSD;
+            
+            // Approximate p-value (two-tailed)
+            const pValue = 2 * (1 - cumulativeTDistribution(Math.abs(tStat), df));
+            
+            return { tStat, df, pValue, cohensD };
+        }
+
+        // Cumulative t-distribution approximation
+        function cumulativeTDistribution(t, df) {
+            // Simple approximation for demonstration
+            // In practice, you'd use a more accurate method
+            const x = df / (t * t + df);
+            const beta = incompleteBeta(x, df/2, 0.5);
+            return 1 - 0.5 * beta;
+        }
+
+        // Incomplete beta function approximation
+        function incompleteBeta(x, a, b) {
+            // Very simplified approximation
+            if (x === 0) return 0;
+            if (x === 1) return 1;
+            return Math.pow(x, a) * Math.pow(1 - x, b) / (a + b);
+        }
+
+        function drawGroupsPlot() {
+            const mean1 = parseFloat(document.getElementById('mean1').value);
+            const mean2 = parseFloat(document.getElementById('mean2').value);
+            const sd1 = parseFloat(document.getElementById('sd1').value);
+            const sd2 = parseFloat(document.getElementById('sd2').value);
+
+            // Clear canvas
+            groupsCtx.clearRect(0, 0, groupsCanvas.width, groupsCanvas.height);
+
+            // Set up coordinate system
+            const padding = 60;
+            const plotWidth = groupsCanvas.width - 2 * padding;
+            const plotHeight = groupsCanvas.height - 2 * padding;
+            
+            const xMin = Math.min(mean1 - 3 * sd1, mean2 - 3 * sd2);
+            const xMax = Math.max(mean1 + 3 * sd1, mean2 + 3 * sd2);
+            const xRange = xMax - xMin;
+            
+            const maxY1 = normalPDF(mean1, mean1, sd1);
+            const maxY2 = normalPDF(mean2, mean2, sd2);
+            const yMax = Math.max(maxY1, maxY2) * 1.1;
+
+            // Draw axes
+            groupsCtx.strokeStyle = '#333';
+            groupsCtx.lineWidth = 1;
+            groupsCtx.beginPath();
+            groupsCtx.moveTo(padding, padding);
+            groupsCtx.lineTo(padding, padding + plotHeight);
+            groupsCtx.lineTo(padding + plotWidth, padding + plotHeight);
+            groupsCtx.stroke();
+
+            // Draw Group 1 (blue)
+            groupsCtx.strokeStyle = '#2563eb';
+            groupsCtx.lineWidth = 3;
+            groupsCtx.beginPath();
+            for (let i = 0; i <= plotWidth; i++) {
+                const x = xMin + (i / plotWidth) * xRange;
+                const y = normalPDF(x, mean1, sd1);
+                const canvasX = padding + i;
+                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    groupsCtx.moveTo(canvasX, canvasY);
+                } else {
+                    groupsCtx.lineTo(canvasX, canvasY);
+                }
+            }
+            groupsCtx.stroke();
+
+            // Draw Group 2 (red)
+            groupsCtx.strokeStyle = '#dc2626';
+            groupsCtx.lineWidth = 3;
+            groupsCtx.beginPath();
+            for (let i = 0; i <= plotWidth; i++) {
+                const x = xMin + (i / plotWidth) * xRange;
+                const y = normalPDF(x, mean2, sd2);
+                const canvasX = padding + i;
+                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    groupsCtx.moveTo(canvasX, canvasY);
+                } else {
+                    groupsCtx.lineTo(canvasX, canvasY);
+                }
+            }
+            groupsCtx.stroke();
+
+            // Add labels and legend
+            groupsCtx.fillStyle = '#333';
+            groupsCtx.font = '12px Arial';
+            
+            // X-axis labels
+            const numLabels = 5;
+            for (let i = 0; i <= numLabels; i++) {
+                const x = xMin + (i / numLabels) * xRange;
+                const canvasX = padding + (i / numLabels) * plotWidth;
+                groupsCtx.fillText(x.toFixed(1), canvasX - 10, padding + plotHeight + 20);
+            }
+
+            // Legend
+            groupsCtx.fillStyle = '#2563eb';
+            groupsCtx.fillText(`Group 1: μ=${mean1}, σ=${sd1}`, padding, 30);
+            groupsCtx.fillStyle = '#dc2626';
+            groupsCtx.fillText(`Group 2: μ=${mean2}, σ=${sd2}`, padding, 50);
+        }
+
+        function drawTDistribution() {
+            const { tStat, df } = calculateTTest();
+
+            // Clear canvas
+            tDistCtx.clearRect(0, 0, tDistCanvas.width, tDistCanvas.height);
+
+            // Set up coordinate system
+            const padding = 60;
+            const plotWidth = tDistCanvas.width - 2 * padding;
+            const plotHeight = tDistCanvas.height - 2 * padding;
+            
+            const xMin = -4;
+            const xMax = 4;
+            const xRange = xMax - xMin;
+            const yMax = tPDF(0, df) * 1.1;
+
+            // Draw axes
+            tDistCtx.strokeStyle = '#333';
+            tDistCtx.lineWidth = 1;
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(padding, padding);
+            tDistCtx.lineTo(padding, padding + plotHeight);
+            tDistCtx.lineTo(padding + plotWidth, padding + plotHeight);
+            tDistCtx.stroke();
+
+            // Draw t-distribution
+            tDistCtx.strokeStyle = '#6b7280';
+            tDistCtx.lineWidth = 2;
+            tDistCtx.beginPath();
+            for (let i = 0; i <= plotWidth; i++) {
+                const x = xMin + (i / plotWidth) * xRange;
+                const y = tPDF(x, df);
+                const canvasX = padding + i;
+                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+                
+                if (i === 0) {
+                    tDistCtx.moveTo(canvasX, canvasY);
+                } else {
+                    tDistCtx.lineTo(canvasX, canvasY);
+                }
+            }
+            tDistCtx.stroke();
+
+            // Draw critical regions (α = 0.05)
+            const criticalValue = 1.96; // Approximate for large df
+            tDistCtx.fillStyle = 'rgba(220, 38, 38, 0.3)';
+            
+            // Left tail
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(padding, padding + plotHeight);
+            for (let x = xMin; x <= -criticalValue; x += 0.1) {
+                const y = tPDF(x, df);
+                const canvasX = padding + ((x - xMin) / xRange) * plotWidth;
+                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+                tDistCtx.lineTo(canvasX, canvasY);
+            }
+            tDistCtx.lineTo(padding + ((-criticalValue - xMin) / xRange) * plotWidth, padding + plotHeight);
+            tDistCtx.fill();
+
+            // Right tail
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(padding + ((criticalValue - xMin) / xRange) * plotWidth, padding + plotHeight);
+            for (let x = criticalValue; x <= xMax; x += 0.1) {
+                const y = tPDF(x, df);
+                const canvasX = padding + ((x - xMin) / xRange) * plotWidth;
+                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+                tDistCtx.lineTo(canvasX, canvasY);
+            }
+            tDistCtx.lineTo(padding + plotWidth, padding + plotHeight);
+            tDistCtx.fill();
+
+            // Draw test statistic line
+            const tStatX = padding + ((tStat - xMin) / xRange) * plotWidth;
+            tDistCtx.strokeStyle = '#059669';
+            tDistCtx.lineWidth = 3;
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(tStatX, padding);
+            tDistCtx.lineTo(tStatX, padding + plotHeight);
+            tDistCtx.stroke();
+
+            // Add labels
+            tDistCtx.fillStyle = '#333';
+            tDistCtx.font = '12px Arial';
+            
+            // X-axis labels
+            const numLabels = 4;
+            for (let i = 0; i <= numLabels; i++) {
+                const x = xMin + (i / numLabels) * xRange;
+                const canvasX = padding + (i / numLabels) * plotWidth;
+                tDistCtx.fillText(x.toFixed(1), canvasX - 5, padding + plotHeight + 20);
+            }
+
+            // Test statistic label
+            tDistCtx.fillStyle = '#059669';
+            tDistCtx.font = 'bold 12px Arial';
+            tDistCtx.fillText(`t = ${tStat.toFixed(3)}`, tStatX + 5, padding + 20);
+        }
+
+        function updateStatistics() {
+            const { tStat, df, pValue, cohensD } = calculateTTest();
+            
+            document.getElementById('t-stat').textContent = tStat.toFixed(3);
+            document.getElementById('df').textContent = Math.round(df);
+            document.getElementById('p-value').textContent = pValue.toFixed(3);
+            document.getElementById('effect-size').textContent = cohensD.toFixed(3);
+
+            // Update p-value significance
+            const pElement = document.getElementById('p-value');
+            if (pValue < 0.05) {
+                pElement.className = 'stat-value p-value significant';
+            } else {
+                pElement.className = 'stat-value p-value not-significant';
+            }
+
+            // Update variance assumption check
+            const sd1 = parseFloat(document.getElementById('sd1').value);
+            const sd2 = parseFloat(document.getElementById('sd2').value);
+            const varianceRatio = Math.max(sd1, sd2) / Math.min(sd1, sd2);
+            const varianceStatus = document.getElementById('variance-status');
+            
+            if (varianceRatio <= 2) {
+                varianceStatus.textContent = '✓ Equal variances';
+                varianceStatus.className = 'status-ok';
+            } else {
+                varianceStatus.textContent = '⚠ Unequal variances';
+                varianceStatus.className = 'status-warning';
+            }
+        }
+
+        function updateDisplay() {
+            // Update slider value displays
+            document.getElementById('mean1-value').textContent = document.getElementById('mean1').value;
+            document.getElementById('sd1-value').textContent = document.getElementById('sd1').value;
+            document.getElementById('n1-value').textContent = document.getElementById('n1').value;
+            document.getElementById('mean2-value').textContent = document.getElementById('mean2').value;
+            document.getElementById('sd2-value').textContent = document.getElementById('sd2').value;
+            document.getElementById('n2-value').textContent = document.getElementById('n2').value;
+
+            updateStatistics();
+            drawGroupsPlot();
+            drawTDistribution();
+        }
+
+        function loadScenario(scenario) {
+            switch (scenario) {
+                case 'no_difference':
+                    document.getElementById('mean1').value = 50;
+                    document.getElementById('mean2').value = 50;
+                    document.getElementById('sd1').value = 10;
+                    document.getElementById('sd2').value = 10;
+                    document.getElementById('n1').value = 30;
+                    document.getElementById('n2').value = 30;
+                    break;
+                    
+                case 'clear_difference':
+                    document.getElementById('mean1').value = 45;
+                    document.getElementById('mean2').value = 60;
+                    document.getElementById('sd1').value = 8;
+                    document.getElementById('sd2').value = 9;
+                    document.getElementById('n1').value = 40;
+                    document.getElementById('n2').value = 45;
+                    break;
+                    
+                case 'small_samples':
+                    document.getElementById('mean1').value = 48;
+                    document.getElementById('mean2').value = 58;
+                    document.getElementById('sd1').value = 12;
+                    document.getElementById('sd2').value = 11;
+                    document.getElementById('n1').value = 12;
+                    document.getElementById('n2').value = 15;
+                    break;
+                    
+                case 'large_samples':
+                    document.getElementById('mean1').value = 49;
+                    document.getElementById('mean2').value = 52;
+                    document.getElementById('sd1').value = 10;
+                    document.getElementById('sd2').value = 11;
+                    document.getElementById('n1').value = 80;
+                    document.getElementById('n2').value = 85;
+                    break;
+                    
+                case 'unequal_variances':
+                    document.getElementById('mean1').value = 50;
+                    document.getElementById('mean2').value = 55;
+                    document.getElementById('sd1').value = 8;
+                    document.getElementById('sd2').value = 18;
+                    document.getElementById('n1').value = 25;
+                    document.getElementById('n2').value = 30;
+                    break;
+            }
+            updateDisplay();
+        }
+
+        // Event listeners
+        document.getElementById('mean1').addEventListener('input', updateDisplay);
+        document.getElementById('sd1').addEventListener('input', updateDisplay);
+        document.getElementById('n1').addEventListener('input', updateDisplay);
+        document.getElementById('mean2').addEventListener('input', updateDisplay);
+        document.getElementById('sd2').addEventListener('input', updateDisplay);
+        document.getElementById('n2').addEventListener('input', updateDisplay);
+
+        // Initialize
+        window.onload = function() {
+            updateDisplay();
+        };
+    </script>
+</body>
+</html>

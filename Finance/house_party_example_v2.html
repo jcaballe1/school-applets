@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Cash Flow Trap: A House Party Story</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --primary: #1a1a1a;
+            --accent: #0066cc;
+            --accent-red: #cc0000;
+            --accent-green: #006633;
+            --bg: #fafafa;
+            --text: #2a2a2a;
+            --text-light: #666;
+            --border: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Slide Container */
+        .deck-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1400px;
+            max-height: 900px;
+            position: relative;
+            background-color: #ffffff;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Individual Slide */
+        .slide {
+            display: none;
+            height: 100%;
+            width: 100%;
+            padding: 80px;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Slide overlay for text readability */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.88);
+            z-index: 0;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        /* Per-slide overlay opacity customization */
+        .slide:nth-child(1)::before {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .slide:nth-child(2)::before {
+            background: rgba(255, 255, 255, 0.67);
+        }
+
+        .slide:nth-child(3)::before {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .slide:nth-child(4)::before {
+            background: rgba(255, 255, 255, 0.80);
+        }
+
+        .slide:nth-child(5)::before {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .slide:nth-child(6)::before {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .slide:nth-child(7)::before {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .slide:nth-child(8)::before {
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        .slide:nth-child(9)::before {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Background images for each slide */
+        .slide:nth-child(1) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .slide:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .slide:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .slide:nth-child(5) {
+            background-image: url('./images/tikkie.avif');
+            background-size: 50%;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+
+        /* Ensure all content sits above overlay */
+        .slide > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'IBM Plex Serif', Georgia, serif;
+            font-size: 4.5em;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 30px;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-family: 'IBM Plex Serif', Georgia, serif;
+            font-size: 3em;
+            font-weight: 600;
+            color: var(--primary);
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.7;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        .large-text {
+            font-size: 1.5em;
+            line-height: 1.6;
+        }
+
+        .small-text {
+            font-size: 0.95em;
+            color: var(--text-light);
+        }
+
+        /* Layout Utilities */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .sidebar-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 60px;
+            height: 100%;
+        }
+
+        .centered-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding-top: 30px;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            background: var(--primary);
+            color: white;
+            padding: 50px 40px;
+            height: 100%;
+            margin: -80px 0 -80px -80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .side-panel h3 {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .side-panel h2 {
+            color: white;
+        }
+
+        /* Big Number */
+        .big-number {
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 8em;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        /* Stats Box */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-item {
+            border-left: 3px solid var(--primary);
+            padding-left: 20px;
+        }
+
+        .stat-value {
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-value.green { color: var(--accent-green); }
+        .stat-value.red { color: var(--accent-red); }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Comparison Cards */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .comparison-card {
+            border: 2px solid var(--border);
+            padding: 35px;
+            background: white;
+            position: relative;
+        }
+
+        .comparison-card.highlight-red {
+            border-color: var(--accent-red);
+            background: #fff5f5;
+        }
+
+        .comparison-card.highlight-green {
+            border-color: var(--accent-green);
+            background: #f0faf5;
+        }
+
+        .option-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+
+        /* Timeline */
+        .timeline {
+            margin-top: 40px;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-item.danger {
+            background: linear-gradient(90deg, #fff0f0 0%, white 100%);
+            padding: 25px 20px;
+            margin: 0 -20px;
+        }
+
+        .timeline-item.success {
+            background: linear-gradient(90deg, #f0faf5 0%, white 100%);
+            padding: 25px 20px;
+            margin: 0 -20px;
+        }
+
+        .timeline-label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .timeline-value {
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .timeline-value.red { color: var(--accent-red); }
+        .timeline-value.green { color: var(--accent-green); }
+
+        /* Pull Quote */
+        .pull-quote {
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 2em;
+            line-height: 1.4;
+            font-weight: 600;
+            color: var(--primary);
+            border-left: 4px solid var(--accent);
+            padding-left: 30px;
+            margin: 40px 0;
+        }
+
+        /* Content Block */
+        .content-block {
+            background: #f8f8f8;
+            padding: 35px;
+            margin: 30px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* List Styling */
+        ul {
+            list-style: none;
+        }
+
+        ul li {
+            padding-left: 30px;
+            position: relative;
+            margin-bottom: 15px;
+            font-size: 1.15em;
+            line-height: 1.6;
+        }
+
+        ul li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Formula Box */
+        .formula-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 40px 0;
+            border: 3px solid var(--accent);
+        }
+
+        .formula {
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+
+        .formula-label {
+            font-size: 1em;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        /* Business Examples */
+        .business-examples {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .business-card {
+            background: white;
+            border: 2px solid var(--border);
+            padding: 30px;
+            border-radius: 4px;
+        }
+
+        .business-card h4 {
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        /* Navigation */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-size: 2.5em;
+            cursor: pointer;
+            padding: 20px;
+            color: var(--text-light);
+            transition: all 0.2s;
+            opacity: 0.3;
+            z-index: 10;
+        }
+
+        .nav-btn:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        .prev { left: 20px; }
+        .next { right: 20px; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+            z-index: 10;
+        }
+
+        /* Footer */
+        .footer-note {
+            position: absolute;
+            bottom: 30px;
+            right: 80px;
+            font-size: 0.85em;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 10;
+        }
+
+        /* Slide Number */
+        .slide-number {
+            position: absolute;
+            top: 40px;
+            right: 80px;
+            font-family: 'IBM Plex Serif', serif;
+            font-size: 1.2em;
+            color: var(--text-light);
+            z-index: 2;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Accent Text */
+        .accent { color: var(--accent); font-weight: 600; }
+        .red { color: var(--accent-red); font-weight: 600; }
+        .green { color: var(--accent-green); font-weight: 600; }
+
+        strong { font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="deck-container">
+    
+    <!-- SLIDE 1: Title -->
+    <div class="slide active">
+        <div class="slide-number">01</div>
+        <div class="centered-content">
+            <h3>Supply Chain Finance Series</h3>
+            <h1>The Cash Flow Trap</h1>
+            <p class="large-text">A house party story about why a profitable business can still leave you bankrupt.</p>
+            <p class="small-text" style="margin-top: 60px;">Use Arrow Keys ← → to Navigate</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: The Scenario -->
+    <div class="slide">
+        <div class="slide-number">02</div>
+        <div class="sidebar-layout">
+            <div class="side-panel">
+                <h3>The Setup</h3>
+                <h2>You're organizing a student party</h2>
+                <p style="color: rgba(255,255,255,0.8); margin-top: 20px;">50 expected guests. Simple business model. Clear profit margin.</p>
+                <p style="color: rgba(255,255,255,0.6); margin-top: 30px; font-size: 0.9em;">You have €250 in your bank account</p>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value red">€200</div>
+                        <div class="stat-label">Costs</div>
+                        <p class="small-text" style="margin-top: 10px;">Beer & Snacks</p>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">€300</div>
+                        <div class="stat-label">Revenue</div>
+                        <p class="small-text" style="margin-top: 10px;">Entry Tickets</p>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value green">€100</div>
+                        <div class="stat-label">Profit</div>
+                        <p class="small-text" style="margin-top: 10px;">Net Margin</p>
+                    </div>
+                </div>
+                <p class="large-text" style="margin-top: 40px;">The plan: Buy the drinks. Guests pay an entry fee.</p>
+                <p class="large-text">Sounds like easy money, right? <strong>Let's see what actually happens...</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: Inventory (DIO) -->
+    <div class="slide">
+        <div class="slide-number">03</div>
+        <div class="split-layout">
+            <div>
+                <div class="big-number">01</div>
+                <h3>Days Inventory Outstanding</h3>
+                <h2>The "Fridge Problem"</h2>
+                <p class="large-text">You buy the beer on <strong>Monday</strong> because it's on sale. The party isn't until <strong>Friday</strong>.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="content-block">
+                    <h4>The Reality</h4>
+                    <p>For <span class="accent">4 days</span>, your cash is trapped in glass bottles sitting in your fridge.</p>
+                    <p style="margin-top: 20px;">You cannot use that money to pay rent. You cannot buy groceries. It is completely locked up in <strong>inventory</strong>.</p>
+                </div>
+                <div class="pull-quote" style="font-size: 1.5em; margin-top: 30px;">
+                    "Inventory is just cash wearing a different costume." 
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- SLIDE 4: Payables (DPO) -->
+    <div class="slide">
+        <div class="slide-number">04</div>
+        <div>
+            <div style="max-width: 900px;">
+                <div class="big-number" style="margin-bottom: 10px;">02</div>
+                <h3 style="margin-bottom: 8px;">Days Payable Outstanding</h3>
+                <h2 style="margin-bottom: 12px;">The "Payment Trick"</h2>
+                <p class="large-text" style="margin-bottom: 25px;">Before we continue: let's understand how <strong>payment timing</strong> affects cash flow.</p>
+            </div>
+            
+            <div class="comparison-grid" style="margin-top: 25px;">
+                <div class="comparison-card" style="padding: 28px;">
+                    <div class="option-label" style="margin-bottom: 10px;">What You Did</div>
+                    <h4 style="margin-bottom: 8px;">Debit Card / Cash</h4>
+                    <p style="margin-bottom: 15px;">Money leaves your bank account <strong>instantly</strong>.</p>
+                    <p style="margin-top: 0; margin-bottom: 0;" class="red">Cash is gone immediately.</p>
+                </div>
+                <div class="comparison-card highlight-green" style="padding: 28px;">
+                    <div class="option-label" style="margin-bottom: 10px;">What Companies Do</div>
+                    <h4 style="margin-bottom: 8px;">Payment Terms (Net 30)</h4>
+                    <p style="margin-bottom: 15px;">Pay suppliers <strong>30 days later</strong>.</p>
+                    <p style="margin-top: 0; margin-bottom: 0;" class="green">Cash stays longer in the business.</p>
+                </div>
+            </div>
+
+            <p class="large-text" style="margin-top: 25px; margin-bottom: 8px;"><strong>The lesson:</strong> Delaying payment to suppliers acts like a free loan. Companies negotiate "payment terms" (Net 30, Net 60) to keep cash longer.</p>
+            <p class="small-text" style="margin-top: 0; margin-bottom: 0; color: var(--text-light);">In your case, you paid immediately with a debit card — so your DPO = 0 days.</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: Receivables (DSO) -->
+    <div class="slide">
+        <div class="slide-number">05</div>
+        <div class="split-layout">
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="content-block">
+                    <h4>Friday Night</h4>
+                    <p>The party happens. Everyone has a great time. You spend all the drinks.</p>
+                </div>
+                <div class="content-block" style="background: #fff8f0; border-color: #ff9900;">
+                    <h4>Sunday</h4>
+                    <p>You send a <strong>Tikkie</strong> to all your friends.</p>
+                </div>
+                <div class="content-block" style="background: #fff0f0; border-color: var(--accent-red);">
+                    <h4>The Following Friday</h4>
+                    <p>Your friends are slow. They finally pay up... <span class="red">7 days later</span>.</p>
+                </div>
+            </div>
+            <div>
+                <div class="big-number">03</div>
+                <h3>Days Sales Outstanding</h3>
+                <h2>The "Tikkie Lag"</h2>
+                <div class="pull-quote" style="margin-top: 40px;">
+                    You made the "sale" on Friday, but you have zero cash for another full week.
+                </div>
+                <p class="large-text" style="margin-top: 30px;">This waiting period is called <strong>Receivables</strong>. You're owed money, but you can't spend promises.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: The Timeline -->
+    <div class="slide">
+        <div class="slide-number">06</div>
+        <div style="max-width: 1000px; margin: 0 auto;">
+            <h2>The "Danger Zone"</h2>
+            <p class="large-text">Watch what happens to your bank account balance:</p>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-label"><strong>Day 0 (Monday)</strong> — Buy Beer (Debit Card)</div>
+                    <div class="timeline-value red">€50 left</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-label"><strong>Day 4 (Friday)</strong> — Party Happens!</div>
+                    <div class="timeline-value red">€50 left</div>
+                </div>
+                <div class="timeline-item danger">
+                    <div class="timeline-label"><strong>Day 5-10</strong> — Waiting for Tikkies...</div>
+                    <div class="timeline-value red">⚠ DANGER ZONE</div>
+                </div>
+                <div class="timeline-item success">
+                    <div class="timeline-label"><strong>Day 11 (Next Friday)</strong> — Friends Finally Pay</div>
+                    <div class="timeline-value green">€350 💰</div>
+                </div>
+            </div>
+
+            <div class="pull-quote" style="margin-top: 60px; font-size: 1.8em;">
+                If your rent was due on Day 6, you are bankrupt — even though you made a profit.
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: Cash Conversion Cycle -->
+    <div class="slide">
+        <div class="slide-number">07</div>
+        <div class="centered-content">
+            <h3>The Formula</h3>
+            <h2>Cash Conversion Cycle (CCC)</h2>
+            <p class="large-text">How long your cash is trapped before coming back to you.</p>
+            
+            <div class="formula-box" style="margin: 25px 0; padding: 30px;">
+                <div class="formula-label" style="margin-bottom: 5px;">The Formula</div>
+                <div class="formula" style="margin: 15px 0;">CCC = DIO + DSO - DPO</div>
+                <p style="margin-top: 15px; margin-bottom: 0; font-size: 0.9em; color: var(--text-light);">
+                    Days Inventory Outstanding + Days Sales Outstanding - Days Payable Outstanding
+                </p>
+            </div>
+
+            <div class="content-block" style="margin-top: 25px; padding: 25px 35px;">
+                <h4 style="margin-bottom: 12px;">In the House Party Example</h4>
+                <p class="large-text" style="margin-bottom: 15px;"><strong>4 days</strong> (inventory) + <strong>7 days</strong> (waiting for payment) - <strong>0 days</strong> (paid immediately)</p>
+                <p class="large-text" style="margin-top: 0; margin-bottom: 0;">= <span class="red"><strong>11 days</strong></span> without cash</p>
+            </div>
+
+            <p class="large-text" style="margin-top: 25px; margin-bottom: 0;">Companies optimize each part to improve cash flow!</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: Real Business Examples -->
+    <div class="slide">
+        <div class="slide-number">08</div>
+        <div style="max-width: 1100px; margin: 0 auto; padding-top: 50px;">
+            <h2>Cash Flow dynamics differ in industries</h2>
+            <!-- <p class="large-text">The same cash flow trap happens to companies every day.</p> -->
+            
+            <div class="business-examples">
+                <div class="business-card">
+                    <h4>Retail Stores</h4>
+                    <p>Buy inventory 60 days before selling it. Pay suppliers in 30 days. Wait 7 days for customer payments.</p>
+                    <p style="margin-top: 15px;" class="red"><strong>CCC: ~37 days</strong></p>
+                </div>
+                <div class="business-card">
+                    <h4>Tech Startups</h4>
+                    <p>Hire developers, build product for months. Revenue comes much later. Burn through cash despite having contracts.</p>
+                    <p style="margin-top: 15px;" class="red"><strong>CCC: 120+ days</strong></p>
+                </div>
+                <div class="business-card">
+                    <h4>Amazon</h4>
+                    <p>Holds inventory 30+ days but gets customer money instantly. Pays suppliers in 90+ days.</p>
+                    <p style="margin-top: 15px;" class="green"><strong>CCC: -60 days!</strong></p>
+                </div>
+            </div>
+
+            <div class="pull-quote" style="margin-top: 50px; font-size: 1.45em;">
+                Profitable companies go bankrupt when they run out of cash, not when they run out of profit.
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: Key Takeaways -->
+    <div class="slide">
+        <div class="slide-number">09</div>
+        <div class="centered-content">
+            <h2>Key Takeaways</h2>
+            <!-- <p class="large-text" style="margin-bottom: 50px;">Remember these three things:</p> -->
+            
+            <div class="content-block" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <h4 style="color: white; font-size: 1.8em;">1. Profit ≠ Cash</h4>
+                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">You can be profitable on paper and still go bankrupt.</p>
+            </div>
+
+            <div class="content-block" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;">
+                <h4 style="color: white; font-size: 1.8em;">2. Timing Matters More Than Amounts</h4>
+                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">When cash moves is often more important than how much.</p>
+            </div>
+
+            <div class="content-block" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none; margin-bottom: 0;">
+                <h4 style="color: white; font-size: 1.8em;">3. Manage the Cycle</h4>
+                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">Buy late. Sell fast. Collect faster.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <button class="nav-btn prev" onclick="moveSlide(-1)">‹</button>
+    <button class="nav-btn next" onclick="moveSlide(1)">›</button>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="footer-note">HZ University of Applied Sciences</div>
+
+</div>
+
+<script>
+    let slideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+
+    function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        
+        if (n >= slides.length) slideIndex = 0;
+        if (n < 0) slideIndex = slides.length - 1;
+        
+        slides[slideIndex].classList.add('active');
+        
+        const progress = ((slideIndex + 1) / slides.length) * 100;
+        progressBar.style.width = progress + '%';
+    }
+
+    function moveSlide(n) {
+        slideIndex += n;
+        showSlide(slideIndex);
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "ArrowRight") {
+            moveSlide(1);
+        } else if (event.key === "ArrowLeft") {
+            moveSlide(-1);
+        }
+    });
+
+    showSlide(0);
+</script>
+
+</body>
+</html>
