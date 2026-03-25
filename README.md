@@ -4,7 +4,7 @@ A collection of interactive teaching tools for statistics and finance concepts.
 
 ## 🎯 Live Demo
 
-Visit: `https://YOUR-USERNAME.github.io/teaching-applets/`
+Visit: `https://jcaballe1.github.io/school-applets/`
 
 ## 📊 Available Applets
 
@@ -31,4 +31,4 @@ Educational use only.
 
 ## 👨‍🏫 Author
 
-HZ University of Applied Sciences
+Andres Caballero
