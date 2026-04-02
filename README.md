@@ -21,7 +21,7 @@ Simply open `index.html` in your browser or visit the live site.
 
 ## Technology
 
-Pure HTML, CSS, and JavaScript - no dependencies required.
+Pure HTML, CSS, and JavaScript. Uses KaTeX (loaded via CDN) for mathematical rendering - no local installation or build steps required.
 
 ## License
 
