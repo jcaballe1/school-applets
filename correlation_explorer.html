@@ -314,7 +314,7 @@
         <div class="main-content">
             <div class="plot-section">
                 <div class="plot-controls">
-                    <h3>📊 Interactive Scatter Plot</h3>
+                    <h3>Interactive Scatter Plot</h3>
                     <div class="control-buttons">
                         <button class="btn" onclick="clearData()">Clear All</button>
                         <button class="btn" onclick="removeLastPoint()">Remove Last</button>
@@ -336,16 +336,32 @@
                     </div>
                     <div class="equation" id="formulaContainer" style="margin: 10px 0;"></div>
                     <div style="font-size: 0.9rem; color: #666; margin-top: 6px;">
-                        Where x̄ and ȳ are the means of variables X and Y
+                        Where <span id="legendN"></span> = sample size, <span id="legendXbar"></span> and <span id="legendYbar"></span> are means, and <span id="legendSx"></span> and <span id="legendSy"></span> are standard deviations
                     </div>
                 </div>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
+                        // Render main formula
                         katex.render(
                             "r = \\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})(y_i - \\bar{y})}{\\sqrt{\\sum_{i=1}^{n}(x_i - \\bar{x})^2 \\cdot \\sum_{i=1}^{n}(y_i - \\bar{y})^2}}",
                             document.getElementById('formulaContainer'),
                             { displayMode: true, throwOnError: false }
                         );
+                        
+                        // Render legend/explanation symbols
+                        katex.render("n", document.getElementById('legendN'), { displayMode: false, throwOnError: false });
+                        katex.render("\\bar{x}", document.getElementById('legendXbar'), { displayMode: false, throwOnError: false });
+                        katex.render("\\bar{y}", document.getElementById('legendYbar'), { displayMode: false, throwOnError: false });
+                        katex.render("s_x", document.getElementById('legendSx'), { displayMode: false, throwOnError: false });
+                        katex.render("s_y", document.getElementById('legendSy'), { displayMode: false, throwOnError: false });
+                        
+                        // Render statistical labels with LaTeX notation
+                        katex.render("n:", document.getElementById('labelN'), { displayMode: false, throwOnError: false });
+                        katex.render("r^2:", document.getElementById('labelRsq'), { displayMode: false, throwOnError: false });
+                        katex.render("\\bar{x}:", document.getElementById('labelMeanX'), { displayMode: false, throwOnError: false });
+                        katex.render("\\bar{y}:", document.getElementById('labelMeanY'), { displayMode: false, throwOnError: false });
+                        katex.render("s_x:", document.getElementById('labelSDX'), { displayMode: false, throwOnError: false });
+                        katex.render("s_y:", document.getElementById('labelSDY'), { displayMode: false, throwOnError: false });
                     });
                 </script>
             </div>
@@ -353,13 +369,12 @@
             <div class="statistics-panel">
                 <div class="correlation-display">
                     <div class="correlation-value" id="correlationValue">0.00</div>
-                    <div class="correlation-label">Correlation Coefficient (r)</div>
+                    <div class="correlation-label">Correlation Coefficient (<i>r</i>)</div>
                 </div>
 
                 <div class="interpretation">
-                    <h3 style="margin-bottom: 10px;">🔍 Relationship Strength</h3>
+                    <h3 style="margin-bottom: 10px;">Relationship Strength</h3>
                     <div id="strengthIndicator" class="strength-indicator strength-weak" style="margin-bottom: 8px; padding: 6px 10px;">
-                        <span>📊</span>
                         <span id="strengthText">No correlation</span>
                     </div>
                     <div style="font-size: 0.85rem; color: #666; display: flex; justify-content: space-between;">
@@ -369,44 +384,44 @@
                 </div>
 
                 <div class="statistics-details">
-                    <h3>📈 Statistical Details</h3>
+                    <h3>Statistical Details</h3>
                     <div class="stats-grid-container">
                         <div class="stat-item">
-                            <span class="stat-label">Points:</span>
+                            <span class="stat-label" id="labelN"></span>
                             <span class="stat-value" id="nPoints">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">R-squared:</span>
+                            <span class="stat-label" id="labelRsq"></span>
                             <span class="stat-value" id="rSquared">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Mean X:</span>
+                            <span class="stat-label" id="labelMeanX"></span>
                             <span class="stat-value" id="meanX">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Mean Y:</span>
+                            <span class="stat-label" id="labelMeanY"></span>
                             <span class="stat-value" id="meanY">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">SD X:</span>
+                            <span class="stat-label" id="labelSDX"></span>
                             <span class="stat-value" id="sdX">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">SD Y:</span>
+                            <span class="stat-label" id="labelSDY"></span>
                             <span class="stat-value" id="sdY">--</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="preset-datasets">
-                    <h3>📋 Sample Datasets</h3>
+                    <h3>Sample Datasets</h3>
                     <div class="dataset-grid">
-                        <button class="dataset-btn" onclick="loadDataset('strong_positive')">Strong Positive<br>(r ≈ 0.9)</button>
-                        <button class="dataset-btn" onclick="loadDataset('strong_negative')">Strong Negative<br>(r ≈ -0.9)</button>
-                        <button class="dataset-btn" onclick="loadDataset('moderate_positive')">Moderate Positive<br>(r ≈ 0.6)</button>
-                        <button class="dataset-btn" onclick="loadDataset('weak_positive')">Weak Positive<br>(r ≈ 0.3)</button>
-                        <button class="dataset-btn" onclick="loadDataset('no_correlation')">No Correlation<br>(r ≈ 0.0)</button>
-                        <button class="dataset-btn" onclick="loadDataset('curvilinear')">Curvilinear<br>(r ≈ 0.0)</button>
+                        <button class="dataset-btn" onclick="loadDataset('strong_positive')">Strong Positive<br>(<i>r</i> ≈ 0.9)</button>
+                        <button class="dataset-btn" onclick="loadDataset('strong_negative')">Strong Negative<br>(<i>r</i> ≈ -0.9)</button>
+                        <button class="dataset-btn" onclick="loadDataset('moderate_positive')">Moderate Positive<br>(<i>r</i> ≈ 0.6)</button>
+                        <button class="dataset-btn" onclick="loadDataset('weak_positive')">Weak Positive<br>(<i>r</i> ≈ 0.3)</button>
+                        <button class="dataset-btn" onclick="loadDataset('no_correlation')">No Correlation<br>(<i>r</i> ≈ 0.0)</button>
+                        <button class="dataset-btn" onclick="loadDataset('curvilinear')">Curvilinear<br>(<i>r</i> ≈ 0.0)</button>
                     </div>
                 </div>
             </div>
@@ -736,48 +751,70 @@
             updateStatistics();
         }
 
+        // Helper function to generate data with precise target correlation
+        function generateCorrelatedData(n, targetR) {
+            const data = [];
+            
+            // Step 1: Generate random X values
+            const xValues = [];
+            for (let i = 0; i < n; i++) {
+                xValues.push(1 + Math.random() * 8);
+            }
+            
+            // Step 2: Generate random Y values
+            const yValues = [];
+            for (let i = 0; i < n; i++) {
+                yValues.push(Math.random() * 10);
+            }
+            
+            // Step 3: Standardize X and Y
+            const meanX = xValues.reduce((a, b) => a + b) / n;
+            const meanY = yValues.reduce((a, b) => a + b) / n;
+            const sdX = Math.sqrt(xValues.reduce((sum, x) => sum + (x - meanX) ** 2, 0) / (n - 1));
+            const sdY = Math.sqrt(yValues.reduce((sum, y) => sum + (y - meanY) ** 2, 0) / (n - 1));
+            
+            const zX = xValues.map(x => (x - meanX) / sdX);
+            const zY = yValues.map(y => (y - meanY) / sdY);
+            
+            // Step 4: Create Y with exact correlation
+            const adjustedY = zY.map((zy, i) => targetR * zX[i] + Math.sqrt(1 - targetR * targetR) * zy);
+            
+            // Step 5: Rescale to original X range and reasonable Y range
+            const meanAdjY = adjustedY.reduce((a, b) => a + b) / n;
+            const sdAdjY = Math.sqrt(adjustedY.reduce((sum, y) => sum + (y - meanAdjY) ** 2, 0) / (n - 1));
+            
+            for (let i = 0; i < n; i++) {
+                const x = xValues[i];
+                // Scale Y to range 0.5-9.5 with mean around 5
+                const y = 5 + ((adjustedY[i] - meanAdjY) / sdAdjY) * 2.5;
+                data.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
+            }
+            
+            return data;
+        }
+
         function loadDataset(type) {
             points = [];
             
             switch (type) {
                 case 'strong_positive':
-                    for (let i = 0; i < 20; i++) {
-                        const x = 1 + Math.random() * 8;
-                        const y = 0.5 + x * 0.9 + (Math.random() - 0.5) * 1;
-                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
-                    }
+                    points = generateCorrelatedData(20, 0.9);
                     break;
                     
                 case 'strong_negative':
-                    for (let i = 0; i < 20; i++) {
-                        const x = 1 + Math.random() * 8;
-                        const y = 9.5 - x * 0.9 + (Math.random() - 0.5) * 1;
-                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
-                    }
+                    points = generateCorrelatedData(20, -0.9);
                     break;
                     
                 case 'moderate_positive':
-                    for (let i = 0; i < 25; i++) {
-                        const x = 1 + Math.random() * 8;
-                        const y = 2 + x * 0.5 + (Math.random() - 0.5) * 3;
-                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
-                    }
+                    points = generateCorrelatedData(25, 0.6);
                     break;
                     
                 case 'weak_positive':
-                    for (let i = 0; i < 30; i++) {
-                        const x = 1 + Math.random() * 8;
-                        const y = 3 + x * 0.2 + (Math.random() - 0.5) * 4;
-                        points.push({ x, y: Math.max(0.5, Math.min(9.5, y)) });
-                    }
+                    points = generateCorrelatedData(30, 0.3);
                     break;
                     
                 case 'no_correlation':
-                    for (let i = 0; i < 25; i++) {
-                        const x = 1 + Math.random() * 8;
-                        const y = 2 + Math.random() * 6;
-                        points.push({ x, y });
-                    }
+                    points = generateCorrelatedData(25, 0.0);
                     break;
                     
                 case 'curvilinear':

@@ -4,7 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Normal Distribution Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <style>
+        :root {
+            --color-primary: #1e3a5f;
+            --color-primary-light: #2d5a8c;
+            --color-accent: #0066cc;
+            --color-accent-light: #e6f2ff;
+            --color-background: #f8f9fa;
+            --color-surface: #ffffff;
+            --color-border: #dee2e6;
+            --color-text: #212529;
+            --color-text-secondary: #6c757d;
+            --color-success: #28a745;
+            --color-warning: #fd7e14;
+            --color-info: #17a2b8;
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --border-radius: 8px;
+            --transition: all 0.2s ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,157 +36,228 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
             margin: 0;
-            padding: 15px;
+            padding: var(--spacing-md);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
 
         .header {
-            background-color: #2c5aa0;
+            background-color: var(--color-primary);
             color: white;
-            padding: 25px;
+            padding: var(--spacing-sm) var(--spacing-md);
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-            font-weight: normal;
+            font-size: 1.875rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         .header p {
-            font-size: 1.1rem;
+            font-size: 1rem;
+            opacity: 0.95;
+            margin: 0;
         }
 
         .main-content {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1.2fr;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            min-height: 500px;
         }
 
-        .plot-section {
-            display: table-cell;
-            width: 70%;
-            padding: 20px;
-            vertical-align: top;
+        .content-left {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
         }
 
-        .controls-section {
-            display: table-cell;
-            width: 30%;
-            background-color: #f9f9f9;
-            padding: 20px;
-            vertical-align: top;
+        .column-middle,
+        .column-right {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
         }
 
         .plot-container {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            padding: 10px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .plot-title {
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #2c3e50;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 8.5;
+            min-height: 250px;
         }
 
         canvas {
-            border-radius: 6px;
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
             display: block;
-            margin: 0 auto;
         }
 
         .control-group {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 15px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .control-group h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
         }
 
         .slider-container {
-            margin-bottom: 20px;
+            margin-bottom: 0.25rem;
+        }
+
+        .slider-container:last-child {
+            margin-bottom: 0;
         }
 
         .slider-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 0.25rem;
             font-weight: 500;
-            color: #34495e;
-            font-size: 1rem;
+            color: var(--color-text);
+            font-size: 0.875rem;
+        }
+
+        .slider-label span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+        }
+
+        .slider-label .katex {
+            font-size: 0.875rem !important;
         }
 
         .slider-value {
-            background-color: #2c5aa0;
+            background-color: var(--color-accent);
             color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
             min-width: 60px;
             text-align: center;
+            font-size: 0.875rem;
         }
 
         .slider {
             width: 100%;
             height: 8px;
             border-radius: 4px;
-            background: #e0e6ed;
+            background: var(--color-border);
             outline: none;
             -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .slider:focus {
+            outline: 2px solid var(--color-accent);
+            outline-offset: 2px;
         }
 
         .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
             appearance: none;
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #2c5aa0;
+            background: var(--color-accent);
             cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: var(--color-primary-light);
+            transform: scale(1.1);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .slider::-moz-range-thumb:hover {
+            background: var(--color-primary-light);
+            transform: scale(1.1);
         }
 
         .statistics-display {
-            background-color: #2c5aa0;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
             color: white;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 15px;
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .statistics-display h3 {
-            margin-bottom: 15px;
-            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
         }
 
         .stat-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 0.25rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
-            font-size: 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .stat-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+        }
+
+        .stat-item .katex {
+            font-size: 0.8125rem !important;
         }
 
         .stat-item:last-child {
@@ -170,246 +265,668 @@
         }
 
         .stat-value {
-            font-weight: bold;
-            font-size: 1.1rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
         }
 
         .probability-calculator {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 15px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .probability-calculator h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
         }
 
         .prob-input {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
+            padding: var(--spacing-xs);
+            border: 1px solid var(--color-border);
             border-radius: 4px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
+            margin-bottom: var(--spacing-xs);
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .prob-input:focus {
+            outline: 2px solid var(--color-accent);
+            outline-offset: 0;
+            border-color: var(--color-accent);
         }
 
         .prob-result {
-            background-color: #f0f8ff;
-            border: 1px solid #b0d4f1;
+            background-color: var(--color-accent-light);
+            border: 1px solid var(--color-accent);
             border-radius: 4px;
-            padding: 12px;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #2c5aa0;
+            padding: var(--spacing-xs);
+            margin-top: var(--spacing-xs);
+            font-weight: 600;
+            color: var(--color-accent);
+            font-size: 0.875rem;
+        }
+
+        .calc-type-select {
+            width: 100%;
+            padding: var(--spacing-xs);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background-color: var(--color-surface);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calc-type-select:focus {
+            outline: 2px solid var(--color-accent);
+            outline-offset: 0;
+            border-color: var(--color-accent);
+        }
+
+        .input-group {
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .input-group.hidden {
+            display: none;
+        }
+
+        .input-row {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .input-row .prob-input {
+            flex: 1;
+            margin-bottom: 0;
         }
 
         .preset-examples {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .preset-examples h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
         }
 
         .example-btn {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            background: white;
+            padding: 0.375rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             text-align: left;
-            margin-bottom: 8px;
+            margin-bottom: 0.25rem;
+            transition: var(--transition);
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .example-btn:last-child {
+            margin-bottom: 0;
         }
 
         .example-btn:hover {
-            border-color: #2c5aa0;
-            background-color: #f0f5ff;
+            border-color: var(--color-accent);
+            background-color: var(--color-accent-light);
+            transform: translateX(2px);
+        }
+
+        .example-btn:focus {
+            outline: 2px solid var(--color-accent);
+            outline-offset: 2px;
         }
 
         .formula-display {
-            background-color: #f9f9f9;
-            border-left: 4px solid #2c5aa0;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 0 4px 4px 0;
+            background-color: var(--color-accent-light);
+            border: 1px solid var(--color-border);
+            border-left: 4px solid var(--color-accent);
+            padding: var(--spacing-xs);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .formula {
             font-family: 'Times New Roman', serif;
-            font-size: 1.1rem;
+            font-size: 0.9375rem;
             text-align: center;
-            margin: 8px 0;
+            margin: 0.25rem 0;
         }
 
         .empirical-rule {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 15px;
-            font-size: 0.9rem;
+            background-color: var(--color-accent-light);
+            border: 1px solid var(--color-border);
+            border-left: 4px solid var(--color-accent);
+            color: var(--color-text);
+            padding: var(--spacing-xs);
+            border-radius: 4px;
+            font-size: 0.8125rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
         }
 
         .empirical-rule h4 {
-            margin-bottom: 10px;
-            color: #856404;
+            margin-bottom: 0.25rem;
+            color: var(--color-text);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .empirical-rule div {
+            margin-bottom: 0.25rem;
+        }
+
+        .empirical-rule div:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Exploration Guide */
+        .exploration-guide {
+            background: linear-gradient(to right, #fff5e6, #ffffff);
+            border: 2px solid var(--color-warning);
+            border-left: 6px solid var(--color-warning);
+            margin: var(--spacing-sm) var(--spacing-sm) 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .guide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+
+        .guide-header:hover {
+            background: linear-gradient(135deg, #ffe8cc 0%, #ffd9a8 100%);
+        }
+
+        .guide-header:focus {
+            outline: 2px solid var(--color-warning);
+            outline-offset: -2px;
+        }
+
+        .guide-header h3 {
+            margin: 0;
+            color: #8b4513;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .guide-header h3::before {
+            content: " ";
+            font-size: 1.125rem;
+        }
+
+        .guide-toggle {
+            font-size: 1.5rem;
+            color: var(--color-warning);
+            transition: transform 0.3s ease;
+            line-height: 1;
+        }
+
+        .guide-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        .guide-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .guide-content.expanded {
+            max-height: 500px;
+            padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm);
+        }
+
+        .guide-content ul {
+            margin: 0;
+            padding-left: 1rem;
+            list-style: none;
+        }
+
+        .guide-content li {
+            margin-bottom: var(--spacing-xs);
+            color: var(--color-text);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .guide-content li:last-child {
+            margin-bottom: 0;
+        }
+
+        .guide-content li::before {
+            content: "▸";
+            position: absolute;
+            left: -1rem;
+            color: var(--color-warning);
+            font-weight: bold;
+        }
+
+        .guide-content strong {
+            color: var(--color-primary);
+            font-weight: 600;
         }
 
         /* Responsive layout */
-        @media (max-width: 768px) {
+        @media (max-width: 1280px) {
             .main-content {
-                display: block;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--spacing-sm);
             }
             
-            .plot-section, .controls-section {
-                display: block;
-                width: 100%;
-                margin-bottom: 15px;
+            .column-right {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+            
+            .column-middle {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-sm);
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.875rem;
+            }
+
+            .main-content {
+                padding: var(--spacing-xs);
+            }
+
+            .canvas-wrapper {
+                min-height: 200px;
+            }
+
+            .exploration-guide {
+                margin: var(--spacing-sm);
+            }
+
+            .guide-header h3 {
+                font-size: 0.9375rem;
+            }
+
+            .guide-content li {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .container {
+                border-width: 2px;
+            }
+
+            .slider:focus,
+            .prob-input:focus,
+            .example-btn:focus {
+                outline-width: 3px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                border: 1px solid black;
+            }
+
+            .example-btn {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <header class="header">
             <h1>Normal Distribution Explorer</h1>
-            <p>Discover how mean and standard deviation shape the normal distribution</p>
-        </div>
+            <!-- <p>Discover how mean and standard deviation shape the normal distribution</p> -->
+        </header>
 
-        <div class="main-content">
-            <div class="plot-section">
+        <section class="exploration-guide">
+            <div class="guide-header" 
+                 role="button" 
+                 tabindex="0" 
+                 aria-expanded="false" 
+                 aria-controls="guide-content"
+                 onclick="toggleGuide()"
+                 onkeydown="handleGuideKeydown(event)">
+                <h3>Exploration Guide &amp; Learning Objectives</h3>
+                <span class="guide-toggle" aria-hidden="true">▼</span>
+            </div>
+            <div id="guide-content" class="guide-content" role="region" aria-label="Learning objectives">
+                <ul>
+                    <li>
+                        <strong>Observe the fundamental property:</strong> Because the total area must equal 1, a wider spread (larger standard deviation) means the true peak height must decrease. Notice how the curve flattens out and the values on the x-axis spread much further apart to maintain this constant area.
+                    </li>
+                    <li>
+                        <strong>Locate the inflection points:</strong> Examine where the curve transitions from concave down (curving downward) to concave up (curving upward). These inflection points occur precisely at <strong>μ ± σ</strong>. Verify this by adjusting the parameters and observing the orange dashed lines. Why might this mathematical property be significant?
+                    </li>
+                    <li>
+                        <strong>Verify the Empirical Rule empirically:</strong> Use the Probability Calculator to test whether approximately 68% of values fall within μ ± σ. For instance, with μ = 100 and σ = 15, calculate P(X ≤ 115) minus P(X ≤ 85). Does your result align with the theoretical 68%?
+                    </li>
+                    <li>
+                        <strong>Explore distribution symmetry:</strong> The normal distribution is perfectly symmetric about its mean. Test this claim: for any value <em>k</em>, compare P(X ≤ μ - k) with P(X ≥ μ + k). Use the Probability Calculator to verify that these probabilities are equal for different values of <em>k</em>.
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <main class="main-content">
+            <section class="content-left" aria-label="Main visualization area">
                 <div class="plot-container">
-                    <div class="plot-title">Normal Distribution Curve</div>
-                    <canvas id="normalPlot" width="700" height="400"></canvas>
+                    <h2 class="plot-title" id="plot-title">Normal Distribution: μ = 0, σ = 10</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="normalPlot" role="img" aria-label="Interactive normal distribution curve visualization"></canvas>
+                    </div>
                 </div>
 
                 <div class="formula-display">
                     <div class="formula">
-                        <strong>Normal Distribution Probability Density Function:</strong>
+                        <strong>Probability Density Function:</strong>
                     </div>
-                    <div class="formula">
-                        f(x) = (1 / (σ√(2π))) × e^(-½((x-μ)/σ)²)
-                    </div>
-                    <div style="font-size: 0.9rem; color: #666; margin-top: 8px;">
-                        where μ = mean, σ = standard deviation, π ≈ 3.14159, e ≈ 2.71828
+                    <div class="formula" id="pdfFormula" role="img" aria-label="PDF formula"></div>
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: var(--spacing-xs);">
+                        where <span id="muSymbol"></span> = mean, <span id="sigmaSymbol"></span> = standard deviation
                     </div>
                 </div>
 
-                <div class="empirical-rule">
-                    <h4>📊 Empirical Rule (68-95-99.7 Rule)</h4>
-                    <div><strong>68%</strong> of data falls within <strong>1 standard deviation</strong> of the mean (μ ± σ)</div>
-                    <div><strong>95%</strong> of data falls within <strong>2 standard deviations</strong> of the mean (μ ± 2σ)</div>
-                    <div><strong>99.7%</strong> of data falls within <strong>3 standard deviations</strong> of the mean (μ ± 3σ)</div>
-                </div>
-            </div>
+                <section class="empirical-rule" aria-labelledby="empirical-rule-heading">
+                    <h4 id="empirical-rule-heading">Empirical Rule (68-95-99.7 Rule)</h4>
+                    <div><strong>68%</strong> of data falls within <strong>1 standard deviation</strong> of the mean (<span id="emp1"></span>)</div>
+                    <div><strong>95%</strong> of data falls within <strong>2 standard deviations</strong> of the mean (<span id="emp2"></span>)</div>
+                    <div><strong>99.7%</strong> of data falls within <strong>3 standard deviations</strong> of the mean (<span id="emp3"></span>)</div>
+                </section>
+            </section>
 
-            <div class="controls-section">
-                <div class="control-group">
-                    <h3>📊 Distribution Parameters</h3>
+            <aside class="column-middle" aria-label="Distribution controls">
+                <section class="control-group" aria-labelledby="params-heading">
+                    <h3 id="params-heading">Distribution Parameters</h3>
                     
                     <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Mean (μ)</span>
-                            <span class="slider-value" id="mean-value">0</span>
-                        </div>
-                        <input type="range" id="mean" class="slider" min="-50" max="50" step="1" value="0">
+                        <label for="mean" class="slider-label">
+                            <span>Mean (<span id="meanLabel"></span>)</span>
+                            <span class="slider-value" id="mean-value" aria-live="polite">0</span>
+                        </label>
+                        <input 
+                            type="range" 
+                            id="mean" 
+                            class="slider" 
+                            min="-200" 
+                            max="200" 
+                            step="1" 
+                            value="0"
+                            aria-label="Adjust distribution mean"
+                            aria-valuemin="-200"
+                            aria-valuemax="200"
+                            aria-valuenow="0">
                     </div>
 
                     <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Standard Deviation (σ)</span>
-                            <span class="slider-value" id="sd-value">10</span>
-                        </div>
-                        <input type="range" id="sd" class="slider" min="1" max="25" step="0.5" value="10">
+                        <label for="sd" class="slider-label">
+                            <span>Standard Deviation (<span id="sdLabel"></span>)</span>
+                            <span class="slider-value" id="sd-value" aria-live="polite">10</span>
+                        </label>
+                        <input 
+                            type="range" 
+                            id="sd" 
+                            class="slider" 
+                            min="1" 
+                            max="30" 
+                            step="0.5" 
+                            value="10"
+                            aria-label="Adjust standard deviation"
+                            aria-valuemin="1"
+                            aria-valuemax="30"
+                            aria-valuenow="10">
                     </div>
-                </div>
+                </section>
 
-                <div class="statistics-display">
-                    <h3>📈 Distribution Properties</h3>
+                <section class="statistics-display" aria-labelledby="stats-heading">
+                    <h3 id="stats-heading">Distribution Properties</h3>
                     <div class="stat-item">
-                        <span>Mean (μ):</span>
-                        <span class="stat-value" id="stat-mean">0</span>
+                        <span>Mean (<span id="statMeanLabel"></span>):</span>
+                        <span class="stat-value" id="stat-mean" aria-live="polite">0</span>
                     </div>
                     <div class="stat-item">
                         <span>Median:</span>
-                        <span class="stat-value" id="stat-median">0</span>
+                        <span class="stat-value" id="stat-median" aria-live="polite">0</span>
                     </div>
                     <div class="stat-item">
                         <span>Mode:</span>
-                        <span class="stat-value" id="stat-mode">0</span>
+                        <span class="stat-value" id="stat-mode" aria-live="polite">0</span>
                     </div>
                     <div class="stat-item">
-                        <span>Standard Deviation (σ):</span>
-                        <span class="stat-value" id="stat-sd">10</span>
+                        <span>Std. Deviation (<span id="statSdLabel"></span>):</span>
+                        <span class="stat-value" id="stat-sd" aria-live="polite">10</span>
                     </div>
                     <div class="stat-item">
-                        <span>Variance (σ²):</span>
-                        <span class="stat-value" id="stat-variance">100</span>
+                        <span>Variance (<span id="statVarLabel"></span>):</span>
+                        <span class="stat-value" id="stat-variance" aria-live="polite">100</span>
                     </div>
-                </div>
+                </section>
+            </aside>
 
-                <div class="probability-calculator">
-                    <h3>🎯 Probability Calculator</h3>
-                    <div style="margin-bottom: 10px;">
-                        <label style="font-size: 0.9rem; color: #666;">Enter a value (X):</label>
-                        <input type="number" id="prob-input" class="prob-input" placeholder="Enter value" value="0">
+            <aside class="column-right" aria-label="Calculations and examples">
+                <section class="probability-calculator" aria-labelledby="calc-heading">
+                    <h3 id="calc-heading">Probability Calculator</h3>
+                    
+                    <div style="margin-bottom: 0.25rem;">
+                        <label for="calc-type" style="font-size: 0.875rem; color: var(--color-text-secondary); display: block; margin-bottom: var(--spacing-xs);">
+                            Calculation Type:
+                        </label>
+                        <select 
+                            id="calc-type" 
+                            class="calc-type-select"
+                            aria-label="Select probability calculation type"
+                            onchange="updateProbabilityUI()">
+                            <option value="less">P(X ≤ x) — Less than or equal to</option>
+                            <option value="greater">P(X ≥ x) — Greater than or equal to</option>
+                            <option value="between">P(x₁ ≤ X ≤ x₂) — Between two values</option>
+                        </select>
+                    </div>
+
+                    <div id="input-single" class="input-group">
+                        <label for="prob-input" style="font-size: 0.875rem; color: var(--color-text-secondary); display: block; margin-bottom: var(--spacing-xs);">
+                            Enter value (<span id="probXLabel"></span>):
+                        </label>
+                        <input 
+                            type="number" 
+                            id="prob-input" 
+                            class="prob-input" 
+                            placeholder="Enter value" 
+                            value="0"
+                            step="0.1"
+                            aria-label="Enter value to calculate probability"
+                            oninput="updateProbability()">
+                    </div>
+
+                    <div id="input-between" class="input-group hidden">
+                        <label style="font-size: 0.875rem; color: var(--color-text-secondary); display: block; margin-bottom: var(--spacing-xs);">
+                            Enter range:
+                        </label>
+                        <div class="input-row">
+                            <input 
+                                type="number" 
+                                id="prob-input-lower" 
+                                class="prob-input" 
+                                placeholder="Lower bound (x₁)" 
+                                value="-10"
+                                step="0.1"
+                                aria-label="Enter lower bound"
+                                oninput="updateProbability()">
+                            <span style="color: var(--color-text-secondary);">to</span>
+                            <input 
+                                type="number" 
+                                id="prob-input-upper" 
+                                class="prob-input" 
+                                placeholder="Upper bound (x₂)" 
+                                value="10"
+                                step="0.1"
+                                aria-label="Enter upper bound"
+                                oninput="updateProbability()">
+                        </div>
                     </div>
                     
-                    <div class="prob-result" id="prob-result">
-                        P(X ≤ 0) = 50.0%
+                    <div class="prob-result" id="prob-result" role="status" aria-live="polite">
+                        <span id="prob-result-text">P(X ≤ 0) = 50.0%</span>
                     </div>
                     
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">
-                        This shows the probability that a randomly selected value is less than or equal to your input.
+                    <div id="prob-help" style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 0.25rem;">
+                        <span id="prob-help-text">This shows the probability that a randomly selected value is less than or equal to your input.</span>
                     </div>
-                </div>
+                </section>
 
-                <div class="preset-examples">
-                    <h3>📋 Common Examples</h3>
-                    <button class="example-btn" onclick="loadExample('standard')">
-                        <strong>Standard Normal:</strong> μ=0, σ=1<br>
+                <section class="preset-examples" aria-labelledby="examples-heading">
+                    <h3 id="examples-heading">Common Examples</h3>
+                    <button class="example-btn" onclick="loadExample('standard')" aria-label="Load standard normal distribution example">
+                        <strong>Standard Normal:</strong> <span id="ex1Label"></span><br>
                         <small>The classic Z-distribution</small>
                     </button>
-                    <button class="example-btn" onclick="loadExample('iq')">
-                        <strong>IQ Scores:</strong> μ=100, σ=15<br>
+                    <button class="example-btn" onclick="loadExample('iq')" aria-label="Load IQ scores distribution example">
+                        <strong>IQ Scores:</strong> <span id="ex2Label"></span><br>
                         <small>Intelligence quotient distribution</small>
                     </button>
-                    <button class="example-btn" onclick="loadExample('height')">
-                        <strong>Adult Height:</strong> μ=170, σ=8<br>
+                    <button class="example-btn" onclick="loadExample('height')" aria-label="Load adult height distribution example">
+                        <strong>Adult Height:</strong> <span id="ex3Label"></span><br>
                         <small>Height in centimeters</small>
                     </button>
-                    <button class="example-btn" onclick="loadExample('test_scores')">
-                        <strong>Test Scores:</strong> μ=75, σ=12<br>
+                    <button class="example-btn" onclick="loadExample('test_scores')" aria-label="Load test scores distribution example">
+                        <strong>Test Scores:</strong> <span id="ex4Label"></span><br>
                         <small>Exam performance distribution</small>
                     </button>
-                    <button class="example-btn" onclick="loadExample('wide_spread')">
-                        <strong>High Variability:</strong> μ=0, σ=20<br>
+                    <button class="example-btn" onclick="loadExample('wide_spread')" aria-label="Load high variability distribution example">
+                        <strong>High Variability:</strong> <span id="ex5Label"></span><br>
                         <small>Wide, flat distribution</small>
                     </button>
-                    <button class="example-btn" onclick="loadExample('narrow_spread')">
-                        <strong>Low Variability:</strong> μ=0, σ=3<br>
+                    <button class="example-btn" onclick="loadExample('narrow_spread')" aria-label="Load low variability distribution example">
+                        <strong>Low Variability:</strong> <span id="ex6Label"></span><br>
                         <small>Narrow, peaked distribution</small>
                     </button>
-                </div>
-            </div>
-        </div>
+                </section>
+            </aside>
+        </main>
     </div>
 
     <script>
+        // Render all LaTeX notation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // PDF Formula
+            katex.render(
+                "f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2}",
+                document.getElementById('pdfFormula'),
+                { displayMode: true, throwOnError: false }
+            );
+            
+            // Formula description symbols
+            katex.render("\\mu", document.getElementById('muSymbol'), { displayMode: false, throwOnError: false });
+            katex.render("\\sigma", document.getElementById('sigmaSymbol'), { displayMode: false, throwOnError: false });
+            
+            // Empirical rule
+            katex.render("\\mu \\pm \\sigma", document.getElementById('emp1'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu \\pm 2\\sigma", document.getElementById('emp2'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu \\pm 3\\sigma", document.getElementById('emp3'), { displayMode: false, throwOnError: false });
+            
+            // Controls section labels
+            katex.render("\\mu", document.getElementById('meanLabel'), { displayMode: false, throwOnError: false });
+            katex.render("\\sigma", document.getElementById('sdLabel'), { displayMode: false, throwOnError: false });
+            
+            // Statistics display labels
+            katex.render("\\mu", document.getElementById('statMeanLabel'), { displayMode: false, throwOnError: false });
+            katex.render("\\sigma", document.getElementById('statSdLabel'), { displayMode: false, throwOnError: false });
+            katex.render("\\sigma^2", document.getElementById('statVarLabel'), { displayMode: false, throwOnError: false });
+            
+            // Probability calculator label
+            katex.render("X", document.getElementById('probXLabel'), { displayMode: false, throwOnError: false });
+            
+            // Example button labels
+            katex.render("\\mu=0, \\sigma=1", document.getElementById('ex1Label'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu=100, \\sigma=15", document.getElementById('ex2Label'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu=170, \\sigma=8", document.getElementById('ex3Label'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu=75, \\sigma=12", document.getElementById('ex4Label'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu=0, \\sigma=20", document.getElementById('ex5Label'), { displayMode: false, throwOnError: false });
+            katex.render("\\mu=0, \\sigma=3", document.getElementById('ex6Label'), { displayMode: false, throwOnError: false });
+        });
+
         const canvas = document.getElementById('normalPlot');
         const ctx = canvas.getContext('2d');
+        let canvasWidth = 800;
+        let canvasHeight = 500;
+
+        // Set up responsive canvas
+        function setupCanvas() {
+            const wrapper = canvas.parentElement;
+            const rect = wrapper.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+            
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+            
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            
+            ctx.scale(dpr, dpr);
+        }
+
+        // Observe canvas wrapper size changes
+        const resizeObserver = new ResizeObserver(() => {
+            setupCanvas();
+            drawNormalDistribution();
+        });
+        
+        resizeObserver.observe(canvas.parentElement);
 
         // Normal distribution PDF function
         function normalPDF(x, mean, sd) {
@@ -447,19 +964,21 @@
             const mean = parseFloat(document.getElementById('mean').value);
             const sd = parseFloat(document.getElementById('sd').value);
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            const margin = 50;
-            const plotWidth = canvas.width - 2 * margin;
-            const plotHeight = canvas.height - 2 * margin;
+            const margin = Math.max(40, canvasWidth * 0.06);
+            const plotWidth = canvasWidth - 2 * margin;
+            const plotHeight = canvasHeight - 2 * margin;
 
             // Determine x-axis range (mean ± 4 standard deviations)
             const xMin = mean - 4 * sd;
             const xMax = mean + 4 * sd;
             const xRange = xMax - xMin;
 
-            // Find maximum y value for scaling
-            const maxY = normalPDF(mean, mean, sd);
+            // Fix maximum y value to a baseline SD = 5 so the peak height 
+            // visibly drops as SD increases (preserving the Area = 1 property visually).
+            const baselineSd = 5;
+            const maxY = normalPDF(mean, mean, baselineSd);
 
             // Draw axes
             ctx.strokeStyle = '#ccc';
@@ -467,15 +986,21 @@
             
             // X-axis
             ctx.beginPath();
-            ctx.moveTo(margin, canvas.height - margin);
-            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.moveTo(margin, canvasHeight - margin);
+            ctx.lineTo(canvasWidth - margin, canvasHeight - margin);
             ctx.stroke();
             
             // Y-axis
             ctx.beginPath();
             ctx.moveTo(margin, margin);
-            ctx.lineTo(margin, canvas.height - margin);
+            ctx.lineTo(margin, canvasHeight - margin);
             ctx.stroke();
+
+            // Apply a clipping mask to the plot region so tall curves don't bleed over the top
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, margin, canvasWidth, canvasHeight - margin);
+            ctx.clip();
 
             // Draw grid lines
             ctx.strokeStyle = '#f0f0f0';
@@ -487,7 +1012,7 @@
                 const canvasX = margin + ((x - xMin) / xRange) * plotWidth;
                 ctx.beginPath();
                 ctx.moveTo(canvasX, margin);
-                ctx.lineTo(canvasX, canvas.height - margin);
+                ctx.lineTo(canvasX, canvasHeight - margin);
                 ctx.stroke();
             }
 
@@ -504,9 +1029,9 @@
                 const x = xMin + (i / resolution) * xRange;
                 const y = normalPDF(x, mean, sd);
                 const canvasX = margin + (i / resolution) * plotWidth;
-                const canvasY = canvas.height - margin - (y / maxY) * 0.8 * plotHeight;
+                const canvasY = canvasHeight - margin - (y / maxY) * 0.8 * plotHeight;
                 
-                points.push({ x: canvasX, y: canvasY });
+                points.push({ x: canvasX, y: canvasY, xValue: x });
                 
                 if (i === 0) {
                     ctx.moveTo(canvasX, canvasY);
@@ -518,24 +1043,75 @@
             ctx.stroke();
             
             // Fill area under curve
-            ctx.lineTo(canvas.width - margin, canvas.height - margin);
-            ctx.lineTo(margin, canvas.height - margin);
+            ctx.lineTo(canvasWidth - margin, canvasHeight - margin);
+            ctx.lineTo(margin, canvasHeight - margin);
             ctx.closePath();
             ctx.fill();
 
+            // Shade the specific area based on probability calculator selection
+            const calcType = document.getElementById('calc-type').value;
+            
+            if (calcType === 'less') {
+                const inputValue = parseFloat(document.getElementById('prob-input').value) || 0;
+                shadeArea(points, xMin, inputValue, 'rgba(40, 167, 69, 0.4)', margin, canvasHeight, plotHeight, maxY);
+            } else if (calcType === 'greater') {
+                const inputValue = parseFloat(document.getElementById('prob-input').value) || 0;
+                shadeArea(points, inputValue, xMax, 'rgba(220, 53, 69, 0.4)', margin, canvasHeight, plotHeight, maxY);
+            } else if (calcType === 'between') {
+                const lowerValue = parseFloat(document.getElementById('prob-input-lower').value) || -10;
+                const upperValue = parseFloat(document.getElementById('prob-input-upper').value) || 10;
+                const x1 = Math.min(lowerValue, upperValue);
+                const x2 = Math.max(lowerValue, upperValue);
+                shadeArea(points, x1, x2, 'rgba(23, 162, 184, 0.5)', margin, canvasHeight, plotHeight, maxY);
+            }
+
+            // Helper function to shade a specific area
+            function shadeArea(points, startX, endX, color, margin, canvasHeight, plotHeight, maxY) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                
+                let started = false;
+                let lastPoint = null;
+                
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    
+                    if (point.xValue >= startX && point.xValue <= endX) {
+                        if (!started) {
+                            // Start from the baseline
+                            ctx.moveTo(point.x, canvasHeight - margin);
+                            ctx.lineTo(point.x, point.y);
+                            started = true;
+                        } else {
+                            ctx.lineTo(point.x, point.y);
+                        }
+                        lastPoint = point;
+                    } else if (started) {
+                        // End the shading
+                        break;
+                    }
+                }
+                
+                if (lastPoint) {
+                    ctx.lineTo(lastPoint.x, canvasHeight - margin);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
             // Draw mean line
-            ctx.strokeStyle = '#e74c3c';
+            ctx.strokeStyle = '#dc3545';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             const meanX = margin + ((mean - xMin) / xRange) * plotWidth;
             ctx.beginPath();
             ctx.moveTo(meanX, margin);
-            ctx.lineTo(meanX, canvas.height - margin);
+            ctx.lineTo(meanX, canvasHeight - margin);
             ctx.stroke();
             ctx.setLineDash([]);
 
             // Draw standard deviation markers
-            ctx.strokeStyle = '#f39c12';
+            ctx.strokeStyle = '#fd7e14';
             ctx.lineWidth = 2;
             ctx.setLineDash([2, 2]);
             
@@ -545,28 +1121,32 @@
             
             ctx.beginPath();
             ctx.moveTo(sd1LeftX, margin);
-            ctx.lineTo(sd1LeftX, canvas.height - margin);
+            ctx.lineTo(sd1LeftX, canvasHeight - margin);
             ctx.moveTo(sd1RightX, margin);
-            ctx.lineTo(sd1RightX, canvas.height - margin);
+            ctx.lineTo(sd1RightX, canvasHeight - margin);
             ctx.stroke();
             
             // μ ± 2σ
-            ctx.strokeStyle = '#9b59b6';
+            ctx.strokeStyle = '#6f42c1';
             const sd2LeftX = margin + ((mean - 2*sd - xMin) / xRange) * plotWidth;
             const sd2RightX = margin + ((mean + 2*sd - xMin) / xRange) * plotWidth;
             
             ctx.beginPath();
             ctx.moveTo(sd2LeftX, margin);
-            ctx.lineTo(sd2LeftX, canvas.height - margin);
+            ctx.lineTo(sd2LeftX, canvasHeight - margin);
             ctx.moveTo(sd2RightX, margin);
-            ctx.lineTo(sd2RightX, canvas.height - margin);
+            ctx.lineTo(sd2RightX, canvasHeight - margin);
             ctx.stroke();
             
             ctx.setLineDash([]);
+            
+            // Restore context to remove clipping mask for text labels
+            ctx.restore();
 
             // Draw x-axis labels
+            const fontSize = Math.max(10, canvasWidth * 0.015);
             ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
+            ctx.font = `${fontSize}px Arial`;
             ctx.textAlign = 'center';
             
             // Mark mean and standard deviations
@@ -575,42 +1155,39 @@
                 const canvasX = margin + ((x - xMin) / xRange) * plotWidth;
                 
                 if (i === 0) {
-                    ctx.fillStyle = '#e74c3c';
-                    ctx.font = 'bold 12px Arial';
-                    ctx.fillText(`μ=${mean}`, canvasX, canvas.height - margin + 20);
+                    ctx.fillStyle = '#dc3545';
+                    ctx.font = `bold ${fontSize}px Arial`;
+                    ctx.fillText(`μ=${mean}`, canvasX, canvasHeight - margin + fontSize * 1.6);
                 } else {
                     ctx.fillStyle = '#666';
-                    ctx.font = '10px Arial';
-                    ctx.fillText(x.toFixed(1), canvasX, canvas.height - margin + 35);
+                    ctx.font = `${fontSize * 0.85}px Arial`;
+                    ctx.fillText(x.toFixed(1), canvasX, canvasHeight - margin + fontSize * 2.8);
                     
                     // Label standard deviations
                     if (i === 1 || i === -1) {
-                        ctx.fillStyle = '#f39c12';
-                        ctx.fillText(`μ${i > 0 ? '+' : ''}${i}σ`, canvasX, canvas.height - margin + 20);
+                        ctx.fillStyle = '#fd7e14';
+                        ctx.fillText(`μ${i > 0 ? '+' : ''}${i}σ`, canvasX, canvasHeight - margin + fontSize * 1.6);
                     } else if (i === 2 || i === -2) {
-                        ctx.fillStyle = '#9b59b6';
-                        ctx.fillText(`μ${i > 0 ? '+' : ''}${i}σ`, canvasX, canvas.height - margin + 20);
+                        ctx.fillStyle = '#6f42c1';
+                        ctx.fillText(`μ${i > 0 ? '+' : ''}${i}σ`, canvasX, canvasHeight - margin + fontSize * 1.6);
                     }
                 }
             }
 
             // Legend
+            const legendFontSize = Math.max(10, canvasWidth * 0.013);
+            const legendSpacing = canvasWidth * 0.12;
+            const legendY = legendFontSize * 1.8;
             ctx.textAlign = 'left';
-            ctx.fillStyle = '#e74c3c';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText('— Mean (μ)', margin, 25);
+            ctx.fillStyle = '#dc3545';
+            ctx.font = `bold ${legendFontSize}px Arial`;
+            ctx.fillText('— Mean (μ)', margin, legendY);
             
-            ctx.fillStyle = '#f39c12';
-            ctx.fillText('— ±1σ (68%)', margin + 100, 25);
+            ctx.fillStyle = '#fd7e14';
+            ctx.fillText('— ±1σ (68%)', margin + legendSpacing, legendY);
             
-            ctx.fillStyle = '#9b59b6';
-            ctx.fillText('— ±2σ (95%)', margin + 200, 25);
-
-            // Title
-            ctx.fillStyle = '#2c3e50';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Normal Distribution: μ = ${mean}, σ = ${sd}`, canvas.width / 2, canvas.height - 5);
+            ctx.fillStyle = '#6f42c1';
+            ctx.fillText('— ±2σ (95%)', margin + legendSpacing * 2, legendY);
         }
 
         function updateStatistics() {
@@ -623,23 +1200,77 @@
             document.getElementById('stat-mode').textContent = mean.toFixed(1);
             document.getElementById('stat-sd').textContent = sd.toFixed(1);
             document.getElementById('stat-variance').textContent = variance.toFixed(1);
+            
+            // Update plot title with current parameters
+            document.getElementById('plot-title').textContent = `Normal Distribution: μ = ${mean.toFixed(1)}, σ = ${sd.toFixed(1)}`;
+        }
+
+        function updateProbabilityUI() {
+            const calcType = document.getElementById('calc-type').value;
+            const inputSingle = document.getElementById('input-single');
+            const inputBetween = document.getElementById('input-between');
+            const helpText = document.getElementById('prob-help-text');
+            
+            if (calcType === 'between') {
+                inputSingle.classList.add('hidden');
+                inputBetween.classList.remove('hidden');
+                helpText.textContent = 'This shows the probability that a randomly selected value falls between the two bounds (inclusive).';
+            } else {
+                inputSingle.classList.remove('hidden');
+                inputBetween.classList.add('hidden');
+                
+                if (calcType === 'less') {
+                    helpText.textContent = 'This shows the probability that a randomly selected value is less than or equal to your input.';
+                } else {
+                    helpText.textContent = 'This shows the probability that a randomly selected value is greater than or equal to your input.';
+                }
+            }
+            
+            updateProbability();
         }
 
         function updateProbability() {
             const mean = parseFloat(document.getElementById('mean').value);
             const sd = parseFloat(document.getElementById('sd').value);
-            const inputValue = parseFloat(document.getElementById('prob-input').value) || 0;
+            const calcType = document.getElementById('calc-type').value;
             
-            const probability = normalCDF(inputValue, mean, sd);
-            const percentage = (probability * 100).toFixed(1);
+            let probability, resultText;
             
-            document.getElementById('prob-result').textContent = `P(X ≤ ${inputValue}) = ${percentage}%`;
+            if (calcType === 'less') {
+                const inputValue = parseFloat(document.getElementById('prob-input').value) || 0;
+                probability = normalCDF(inputValue, mean, sd);
+                resultText = `P(X ≤ ${inputValue}) = ${(probability * 100).toFixed(1)}%`;
+            } else if (calcType === 'greater') {
+                const inputValue = parseFloat(document.getElementById('prob-input').value) || 0;
+                probability = 1 - normalCDF(inputValue, mean, sd);
+                resultText = `P(X ≥ ${inputValue}) = ${(probability * 100).toFixed(1)}%`;
+            } else { // between
+                const lowerValue = parseFloat(document.getElementById('prob-input-lower').value) || -10;
+                const upperValue = parseFloat(document.getElementById('prob-input-upper').value) || 10;
+                
+                // Ensure lower < upper
+                const x1 = Math.min(lowerValue, upperValue);
+                const x2 = Math.max(lowerValue, upperValue);
+                
+                probability = normalCDF(x2, mean, sd) - normalCDF(x1, mean, sd);
+                resultText = `P(${x1} ≤ X ≤ ${x2}) = ${(probability * 100).toFixed(1)}%`;
+            }
+            
+            document.getElementById('prob-result-text').textContent = resultText;
+            drawNormalDistribution();
         }
 
         function updateDisplay() {
+            const meanSlider = document.getElementById('mean');
+            const sdSlider = document.getElementById('sd');
+            
             // Update slider value displays
-            document.getElementById('mean-value').textContent = document.getElementById('mean').value;
-            document.getElementById('sd-value').textContent = document.getElementById('sd').value;
+            document.getElementById('mean-value').textContent = meanSlider.value;
+            document.getElementById('sd-value').textContent = sdSlider.value;
+            
+            // Update ARIA attributes
+            meanSlider.setAttribute('aria-valuenow', meanSlider.value);
+            sdSlider.setAttribute('aria-valuenow', sdSlider.value);
 
             updateStatistics();
             updateProbability();
@@ -682,15 +1313,35 @@
             updateDisplay();
         }
 
+        // Exploration Guide Toggle
+        function toggleGuide() {
+            const header = document.querySelector('.guide-header');
+            const content = document.getElementById('guide-content');
+            const toggle = document.querySelector('.guide-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('expanded');
+            toggle.classList.toggle('expanded');
+        }
+
+        function handleGuideKeydown(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleGuide();
+            }
+        }
+
         // Event listeners
         document.getElementById('mean').addEventListener('input', updateDisplay);
         document.getElementById('sd').addEventListener('input', updateDisplay);
-        document.getElementById('prob-input').addEventListener('input', updateProbability);
 
         // Initialize
-        window.onload = function() {
+        window.addEventListener('load', function() {
+            setupCanvas();
             updateDisplay();
-        };
+            updateProbabilityUI();
+        });
     </script>
 </body>
 </html>

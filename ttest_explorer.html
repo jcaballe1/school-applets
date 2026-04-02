@@ -4,7 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Two-Group T-Test Comparison Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <style>
+        :root {
+            --color-primary: #1e3a5f;
+            --color-primary-light: #2d5a8c;
+            --color-accent: #0066cc;
+            --color-accent-light: #e6f2ff;
+            --color-background: #f8f9fa;
+            --color-surface: #ffffff;
+            --color-border: #dee2e6;
+            --color-text: #212529;
+            --color-text-secondary: #6c757d;
+            --color-success: #28a745;
+            --color-danger: #dc3545;
+            --color-warning: #fd7e14;
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --border-radius: 8px;
+            --transition: all 0.2s ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,456 +35,496 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.5;
             margin: 0;
-            padding: 15px;
+            padding: var(--spacing-sm);
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
 
         .header {
-            background-color: #2c5aa0;
+            background-color: var(--color-primary);
             color: white;
-            padding: 25px;
+            padding: var(--spacing-sm) var(--spacing-md);
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-            font-weight: normal;
+            font-size: 1.75rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         .header p {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin: 0;
         }
 
         .main-content {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1.2fr;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
         }
 
-        .visualization-section {
-            display: table-cell;
-            width: 70%;
-            padding: 20px;
-            vertical-align: top;
+        .content-left, .column-middle, .column-right {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
         }
 
-        .controls-section {
-            display: table-cell;
-            width: 30%;
-            background-color: #f9f9f9;
-            padding: 20px;
-            vertical-align: top;
+        .panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        .plot-container {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            padding: 10px;
-        }
-
-        .plot-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        canvas {
-            border-radius: 6px;
-            display: block;
-            margin: 0 auto;
+        .panel h3 {
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
         }
 
         .hypothesis-display {
             background-color: #f0f8ff;
-            border: 1px solid #b0d4f1;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
+            border-left: 4px solid var(--color-primary);
         }
 
-        .hypothesis-display h3 {
-            color: #2c5aa0;
-            margin-bottom: 10px;
+        .plot-title {
+            text-align: center;
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--color-text);
         }
 
-        .controls {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 6;
+            min-height: 180px;
         }
 
-        .control-group {
-            margin-bottom: 25px;
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            display: block;
         }
 
-        .control-group h3 {
-            color: #2c5aa0;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
+        .slider-container {
+            margin-bottom: 0.25rem;
         }
 
-        .control-item {
+        .slider-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .control-item span {
-            font-size: 0.9rem;
+            margin-bottom: 0.1rem;
+            font-weight: 500;
+            color: var(--color-text);
+            font-size: 0.85rem;
         }
 
         .slider-value {
-            background-color: #e8f4fd;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            color: #2c5aa0;
-            min-width: 50px;
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            min-width: 45px;
             text-align: center;
+            font-size: 0.8rem;
         }
 
         .slider {
             width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #d3d3d3;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-border);
             outline: none;
-            margin: 8px 0 15px 0;
             -webkit-appearance: none;
             appearance: none;
+            cursor: pointer;
+            margin-bottom: 0.25rem;
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #2c5aa0;
+            background: var(--color-accent);
             cursor: pointer;
         }
 
         .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #2c5aa0;
+            background: var(--color-accent);
             cursor: pointer;
             border: none;
         }
 
         .results-display {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: white;
         }
 
         .results-display h3 {
-            color: #2c5aa0;
-            margin-bottom: 15px;
+            color: white;
         }
 
         .stat-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+            padding: 0.15rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.85rem;
         }
 
         .stat-row:last-child {
             border-bottom: none;
         }
 
-        .stat-label {
-            font-weight: bold;
-        }
-
         .stat-value {
-            color: #2c5aa0;
+            font-weight: 600;
+            font-size: 0.95rem;
             font-family: 'Courier New', monospace;
         }
 
-        .p-value {
-            font-size: 1.1rem;
-            font-weight: bold;
+        .p-value-display {
+            background: rgba(255,255,255,0.9);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: inline-block;
         }
 
-        .significant {
-            color: #d9534f;
-        }
+        .significant { color: var(--color-danger); }
+        .not-significant { color: var(--color-success); }
 
-        .not-significant {
-            color: #5cb85c;
-        }
-
-        .assumptions {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-
-        .assumptions h3 {
-            color: #2c5aa0;
-            margin-bottom: 15px;
-        }
-
-        .assumption-item {
+        .assumptions-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding: 8px;
-            background-color: #f9f9f9;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            padding: 0.25rem;
+            background-color: var(--color-background);
             border-radius: 4px;
         }
 
-        .status-ok {
-            color: #5cb85c;
-            font-weight: bold;
+        .status-ok { color: var(--color-success); font-weight: 600; }
+        .status-warning { color: var(--color-warning); font-weight: 600; }
+
+        .formula-display {
+            background-color: var(--color-accent-light);
+            border-left: 4px solid var(--color-accent);
         }
 
-        .status-warning {
-            color: #f0ad4e;
-            font-weight: bold;
-        }
-
-        .preset-scenarios {
-            background: white;
-            border: 2px solid #e0e6ed;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .preset-scenarios h3 {
-            color: #2c5aa0;
-            margin-bottom: 15px;
-        }
-
-        .scenario-btn {
+        .example-btn {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
+            padding: 0.35rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 0.75rem;
             text-align: left;
-            transition: background-color 0.2s;
+            margin-bottom: 0.25rem;
+            transition: var(--transition);
+            line-height: 1.3;
+        }
+        
+        .example-btn:hover {
+            border-color: var(--color-accent);
+            background-color: var(--color-accent-light);
         }
 
-        .scenario-btn:hover {
-            background-color: #e9ecef;
+        /* Exploration Guide */
+        .exploration-guide {
+            background: linear-gradient(to right, #fff5e6, #ffffff);
+            border: 2px solid var(--color-warning);
+            border-left: 6px solid var(--color-warning);
+            margin: var(--spacing-sm) var(--spacing-sm) 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .scenario-btn:last-child {
-            margin-bottom: 0;
+        .guide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: #fff5e6;
+            cursor: pointer;
+            user-select: none;
         }
 
-        .formula {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 15px;
-            margin: 15px 0;
-            text-align: center;
-            font-family: 'Times New Roman', serif;
-            font-size: 1.1rem;
+        .guide-header h3 {
+            margin: 0;
+            color: #8b4513;
+            font-size: 0.9rem;
+            font-weight: 600;
         }
 
-        @media (max-width: 768px) {
+        .guide-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .guide-content.expanded {
+            max-height: 500px;
+            padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm);
+        }
+
+        .guide-content ul {
+            margin: 0;
+            padding-left: 1rem;
+            list-style: none;
+        }
+
+        .guide-content li {
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+            position: relative;
+        }
+
+        .guide-content li::before {
+            content: "▸";
+            position: absolute;
+            left: -1rem;
+            color: var(--color-warning);
+            font-weight: bold;
+        }
+
+        @media (max-width: 1024px) {
             .main-content {
-                display: block;
+                grid-template-columns: 1fr;
             }
-            
-            .visualization-section,
-            .controls-section {
-                display: block;
-                width: 100%;
-            }
+            .column-middle { order: -1; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🔬 Two-Group T-Test Comparison Explorer</h1>
+        <header class="header">
+            <h1>Two-Group T-Test Comparison Explorer</h1>
             <p>Understand how t-tests compare the means of two independent groups</p>
-        </div>
-        
-        <div class="main-content">
-            <div class="visualization-section">
-                <div class="hypothesis-display">
-                    <h3>📊 Hypotheses</h3>
-                    <p>
-                        <strong>H₀ (Null):</strong> μ₁ = μ₂ (No difference between group means)
-                    </p>
-                    <p>
-                        <strong>H₁ (Alternative):</strong> μ₁ ≠ μ₂ (There is a difference between group means)
-                    </p>
-                </div>
-                
-                <div class="plot-container">
-                    <div class="plot-title">Group Distributions Comparison</div>
-                    <canvas id="groupsPlot" width="800" height="300"></canvas>
-                </div>
-                
-                <div class="plot-container">
-                    <div class="plot-title">T-Distribution with Test Statistic</div>
-                    <canvas id="tDistPlot" width="800" height="300"></canvas>
-                </div>
-                
-                <div class="formula">
-                    <strong>Welch's t-test formula:</strong><br>
-                    t = (x̄₁ - x̄₂) / √[(s₁²/n₁) + (s₂²/n₂)]<br>
-                    <small>where x̄ = sample mean, s² = sample variance, n = sample size</small>
-                </div>
+        </header>
+
+        <section class="exploration-guide">
+            <div class="guide-header" onclick="toggleGuide()">
+                <h3>Exploration Guide & Learning Objectives</h3>
+                <span class="guide-toggle">▼</span>
             </div>
+            <div id="guide-content" class="guide-content">
+                <ul>
+                    <li><strong>Observe the Distributions:</strong> See how the overlap between the two normal curves changes when you move the population means (<span id="guideMu1"></span> vs <span id="guideMu2"></span>) further apart. The less overlap, the easier it is to detect a statistically significant difference.</li>
+                    <li><strong>Power of Sample Size:</strong> Change the sample sizes (<span id="guideN1"></span> and <span id="guideN2"></span>). Notice that the physical shape of the population distributions above does not change, but the calculated t-statistic increases and the p-value dramatically shrinks. More data provides higher confidence!</li>
+                    <li><strong>Critical Regions:</strong> On the bottom plot, the green line represents your calculated t-statistic, while the red shaded areas represent the critical regions (<span id="guideAlpha"></span>). If the green line falls inside the red shading, your result is statistically significant.</li>
+                    <li><strong>Unequal Variances:</strong> Load the "Unequal Variances" preset to see what happens when standard deviations are wildly different. Notice how the "Assumptions Check" panel catches this and uses Welch's adjustment automatically.</li>
+                </ul>
+            </div>
+        </section>
+
+        <main class="main-content">
+            <section class="content-left">
+                <div class="panel hypothesis-display">
+                    <h3>Hypotheses</h3>
+                    <div id="hypothesis-text"></div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="plot-title">Group Distributions Comparison</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="groupsPlot"></canvas>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="plot-title">T-Distribution with Test Statistic</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="tDistPlot"></canvas>
+                    </div>
+                </div>
+            </section>
             
-            <div class="controls-section">
-                <div class="controls">
-                    <div class="control-group">
-                        <h3>🔵 Group 1 Parameters</h3>
-                        <div class="control-item">
-                            <span>Mean (μ₁)</span>
-                            <span class="slider-value" id="mean1-value">50</span>
-                        </div>
+            <aside class="column-middle">
+                <div class="panel">
+                    <h3>Group 1 Parameters (Blue)</h3>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Mean (<span id="lblMu1"></span>)</span> <span class="slider-value" id="mean1-value">50</span></label>
                         <input type="range" id="mean1" class="slider" min="0" max="100" step="1" value="50">
-                        
-                        <div class="control-item">
-                            <span>Standard Deviation (σ₁)</span>
-                            <span class="slider-value" id="sd1-value">10</span>
-                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Std Deviation (<span id="lblSd1"></span>)</span> <span class="slider-value" id="sd1-value">10</span></label>
                         <input type="range" id="sd1" class="slider" min="1" max="20" step="1" value="10">
-                        
-                        <div class="control-item">
-                            <span>Sample Size (n₁)</span>
-                            <span class="slider-value" id="n1-value">30</span>
-                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Sample Size (<span id="lblN1"></span>)</span> <span class="slider-value" id="n1-value">30</span></label>
                         <input type="range" id="n1" class="slider" min="10" max="100" step="5" value="30">
                     </div>
-                    
-                    <div class="control-group">
-                        <h3>🔴 Group 2 Parameters</h3>
-                        <div class="control-item">
-                            <span>Mean (μ₂)</span>
-                            <span class="slider-value" id="mean2-value">55</span>
-                        </div>
+                </div>
+                
+                <div class="panel">
+                    <h3>Group 2 Parameters (Red)</h3>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Mean (<span id="lblMu2"></span>)</span> <span class="slider-value" id="mean2-value">55</span></label>
                         <input type="range" id="mean2" class="slider" min="0" max="100" step="1" value="55">
-                        
-                        <div class="control-item">
-                            <span>Standard Deviation (σ₂)</span>
-                            <span class="slider-value" id="sd2-value">12</span>
-                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Std Deviation (<span id="lblSd2"></span>)</span> <span class="slider-value" id="sd2-value">12</span></label>
                         <input type="range" id="sd2" class="slider" min="1" max="20" step="1" value="12">
-                        
-                        <div class="control-item">
-                            <span>Sample Size (n₂)</span>
-                            <span class="slider-value" id="n2-value">35</span>
-                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label"><span>Sample Size (<span id="lblN2"></span>)</span> <span class="slider-value" id="n2-value">35</span></label>
                         <input type="range" id="n2" class="slider" min="10" max="100" step="5" value="35">
                     </div>
                 </div>
-                
-                <div class="results-display">
-                    <h3>📈 Test Results</h3>
+            </aside>
+
+            <aside class="column-right">
+                <div class="panel results-display">
+                    <h3>Test Results</h3>
                     <div class="stat-row">
-                        <span class="stat-label">t-statistic:</span>
-                        <span class="stat-value" id="t-stat">-1.23</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Degrees of freedom:</span>
-                        <span class="stat-value" id="df">63</span>
+                        <span>t-statistic (<span id="lblT"></span>):</span>
+                        <span class="stat-value" id="t-stat">0.000</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">p-value:</span>
-                        <span class="stat-value p-value" id="p-value">0.223</span>
+                        <span>Degrees of freedom (<span id="lblDf"></span>):</span>
+                        <span class="stat-value" id="df">0</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Effect size (Cohen's d):</span>
-                        <span class="stat-value" id="effect-size">0.31</span>
+                        <span>Effect size (Cohen's <span id="lblD"></span>):</span>
+                        <span class="stat-value" id="effect-size">0.00</span>
                     </div>
-                </div>
-                
-                <div class="assumptions">
-                    <h3>✅ Assumptions Check</h3>
-                    <div class="assumption-item">
-                        <span>Independence</span>
-                        <span class="status-ok">✓ Assumed</span>
-                    </div>
-                    <div class="assumption-item">
-                        <span>Normality</span>
-                        <span class="status-ok">✓ Assumed</span>
-                    </div>
-                    <div class="assumption-item">
-                        <span>Equal Variances</span>
-                        <span id="variance-status" class="status-ok">✓ Using Welch's</span>
+                    <div class="stat-row" style="margin-top: 0.25rem;">
+                        <span>p-value (<span id="lblP"></span>):</span>
+                        <span class="p-value-display"><span class="stat-value significant" id="p-value">0.000</span></span>
                     </div>
                 </div>
 
-                <div class="preset-scenarios">
-                    <h3>📋 Example Scenarios</h3>
-                    <button class="scenario-btn" onclick="loadScenario('no_difference')">
-                        <strong>No Difference:</strong> μ₁=50, μ₂=50<br>
-                        <small>Perfect null hypothesis example</small>
+                <div class="panel formula-display">
+                    <h3 style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: center;">Welch's t-test formula:</h3>
+                    <div id="welchFormula" style="margin: 0.5rem 0; text-align: center;"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>Assumptions Check</h3>
+                    <div class="assumptions-item">
+                        <span>Independence</span><span class="status-ok">✓ Assumed</span>
+                    </div>
+                    <div class="assumptions-item">
+                        <span>Normality</span><span class="status-ok">✓ Assumed</span>
+                    </div>
+                    <div class="assumptions-item">
+                        <span>Equal Variances</span><span id="variance-status" class="status-ok">✓ Using Welch's</span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Example Scenarios</h3>
+                    <button class="example-btn" onclick="loadScenario('no_difference')">
+                        <strong>No Difference</strong><br>
+                        <span id="scen1"></span>
                     </button>
-                    <button class="scenario-btn" onclick="loadScenario('clear_difference')">
-                        <strong>Clear Difference:</strong> μ₁=45, μ₂=60<br>
-                        <small>Large effect, high power</small>
+                    <button class="example-btn" onclick="loadScenario('clear_difference')">
+                        <strong>Clear Difference</strong><br>
+                        <span id="scen2"></span>
                     </button>
-                    <button class="scenario-btn" onclick="loadScenario('small_samples')">
-                        <strong>Small Samples:</strong> n₁=12, n₂=15<br>
-                        <small>Large effect, low power</small>
+                    <button class="example-btn" onclick="loadScenario('small_samples')">
+                        <strong>Small Samples</strong><br>
+                        <span id="scen3"></span>
                     </button>
-                    <button class="scenario-btn" onclick="loadScenario('large_samples')">
-                        <strong>Large Samples:</strong> n₁=80, n₂=85<br>
-                        <small>Small effect, high power</small>
-                    </button>
-                    <button class="scenario-btn" onclick="loadScenario('unequal_variances')">
-                        <strong>Unequal Variances:</strong> σ₁=8, σ₂=18<br>
-                        <small>Why we use Welch's t-test</small>
+                    <button class="example-btn" onclick="loadScenario('unequal_variances')">
+                        <strong>Unequal Variances</strong><br>
+                        <span id="scen4"></span>
                     </button>
                 </div>
-            </div>
-        </div>
+            </aside>
+        </main>
     </div>
 
     <script>
-        // Get canvas contexts
+        // Render LaTeX elements
+        document.addEventListener('DOMContentLoaded', function() {
+            katex.render("H_0: \\mu_1 = \\mu_2 \\quad \\text{(No difference)} \\\\[0.2em] H_1: \\mu_1 \\neq \\mu_2 \\quad \\text{(Difference exists)}", document.getElementById('hypothesis-text'), { displayMode: true });
+            katex.render("t = \\frac{\\bar{x}_1 - \\bar{x}_2}{\\sqrt{\\frac{s_1^2}{n_1} + \\frac{s_2^2}{n_2}}}", document.getElementById('welchFormula'), { displayMode: true });
+            
+            const runInline = (str, id) => katex.render(str, document.getElementById(id), { displayMode: false });
+            runInline("\\mu_1", "lblMu1"); runInline("\\sigma_1", "lblSd1"); runInline("n_1", "lblN1");
+            runInline("\\mu_2", "lblMu2"); runInline("\\sigma_2", "lblSd2"); runInline("n_2", "lblN2");
+            runInline("t", "lblT"); runInline("v", "lblDf"); runInline("d", "lblD"); runInline("p", "lblP");
+            
+            runInline("\\mu_1", "guideMu1"); runInline("\\mu_2", "guideMu2"); 
+            runInline("n_1", "guideN1"); runInline("n_2", "guideN2"); runInline("\\alpha = 0.05", "guideAlpha");
+
+            runInline("\\mu_1=50, \\mu_2=50", "scen1");
+            runInline("\\mu_1=45, \\mu_2=60", "scen2");
+            runInline("n_1=12, n_2=15", "scen3");
+            runInline("\\sigma_1=8, \\sigma_2=18", "scen4");
+        });
+
+        function toggleGuide() {
+            const content = document.getElementById('guide-content');
+            content.classList.toggle('expanded');
+        }
+
+        // Canvas Setup & Resize Observer
         const groupsCanvas = document.getElementById('groupsPlot');
         const groupsCtx = groupsCanvas.getContext('2d');
         const tDistCanvas = document.getElementById('tDistPlot');
         const tDistCtx = tDistCanvas.getContext('2d');
 
-        // Normal distribution function
+        function resizeCanvases() {
+            [groupsCanvas, tDistCanvas].forEach(canvas => {
+                const wrapper = canvas.parentElement;
+                const rect = wrapper.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                canvas.getContext('2d').scale(dpr, dpr);
+            });
+            updateDisplay();
+        }
+
+        const resizeObserver = new ResizeObserver(() => resizeCanvases());
+        window.addEventListener('load', () => {
+            resizeObserver.observe(groupsCanvas.parentElement);
+            resizeObserver.observe(tDistCanvas.parentElement);
+            resizeCanvases();
+        });
+
+        // Math Functions
         function normalPDF(x, mean, sd) {
             return (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / sd, 2));
         }
 
-        // T-distribution function (approximation)
         function tPDF(x, df) {
             const gamma1 = gammaFunction((df + 1) / 2);
             const gamma2 = gammaFunction(df / 2);
@@ -469,27 +532,19 @@
             return coefficient * Math.pow(1 + (x * x) / df, -(df + 1) / 2);
         }
 
-        // Gamma function approximation
         function gammaFunction(z) {
-            // Stirling's approximation for gamma function
-            if (z < 0.5) {
-                return Math.PI / (Math.sin(Math.PI * z) * gammaFunction(1 - z));
-            }
+            if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gammaFunction(1 - z));
             z -= 1;
             const g = 7;
             const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
                       771.32342877765313, -176.61502916214059, 12.507343278686905,
                       -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
-            
             let x = c[0];
-            for (let i = 1; i < g + 2; i++) {
-                x += c[i] / (z + i);
-            }
+            for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
             const t = z + g + 0.5;
             return Math.sqrt(2 * Math.PI) * Math.pow(t, (z + 0.5)) * Math.exp(-t) * x;
         }
 
-        // Calculate Welch's t-test
         function calculateTTest() {
             const mean1 = parseFloat(document.getElementById('mean1').value);
             const mean2 = parseFloat(document.getElementById('mean2').value);
@@ -503,254 +558,166 @@
             const sePooled = Math.sqrt(se1 + se2);
             
             const tStat = (mean1 - mean2) / sePooled;
-            
-            // Welch's degrees of freedom
             const df = Math.pow(se1 + se2, 2) / (Math.pow(se1, 2) / (n1 - 1) + Math.pow(se2, 2) / (n2 - 1));
             
-            // Effect size (Cohen's d)
             const pooledSD = Math.sqrt(((n1 - 1) * sd1 * sd1 + (n2 - 1) * sd2 * sd2) / (n1 + n2 - 2));
             const cohensD = (mean1 - mean2) / pooledSD;
             
-            // Approximate p-value (two-tailed)
-            const pValue = 2 * (1 - cumulativeTDistribution(Math.abs(tStat), df));
+            const x = df / (tStat * tStat + df);
+            const pValue = 2 * (1 - (1 - 0.5 * incompleteBeta(x, df/2, 0.5)));
             
             return { tStat, df, pValue, cohensD };
         }
 
-        // Cumulative t-distribution approximation
-        function cumulativeTDistribution(t, df) {
-            // Simple approximation for demonstration
-            // In practice, you'd use a more accurate method
-            const x = df / (t * t + df);
-            const beta = incompleteBeta(x, df/2, 0.5);
-            return 1 - 0.5 * beta;
-        }
-
-        // Incomplete beta function approximation
         function incompleteBeta(x, a, b) {
-            // Very simplified approximation
-            if (x === 0) return 0;
+            if (x === 0 || isNaN(x)) return 0;
             if (x === 1) return 1;
             return Math.pow(x, a) * Math.pow(1 - x, b) / (a + b);
         }
 
         function drawGroupsPlot() {
+            const w = groupsCanvas.parentElement.getBoundingClientRect().width;
+            const h = groupsCanvas.parentElement.getBoundingClientRect().height;
+            if (!w || !h) return;
+
+            groupsCtx.clearRect(0, 0, w, h);
             const mean1 = parseFloat(document.getElementById('mean1').value);
             const mean2 = parseFloat(document.getElementById('mean2').value);
             const sd1 = parseFloat(document.getElementById('sd1').value);
             const sd2 = parseFloat(document.getElementById('sd2').value);
 
-            // Clear canvas
-            groupsCtx.clearRect(0, 0, groupsCanvas.width, groupsCanvas.height);
-
-            // Set up coordinate system
-            const padding = 60;
-            const plotWidth = groupsCanvas.width - 2 * padding;
-            const plotHeight = groupsCanvas.height - 2 * padding;
+            const pad = 35;
+            const pxW = w - 2 * pad;
+            const pxH = h - 2 * pad;
             
             const xMin = Math.min(mean1 - 3 * sd1, mean2 - 3 * sd2);
             const xMax = Math.max(mean1 + 3 * sd1, mean2 + 3 * sd2);
             const xRange = xMax - xMin;
-            
-            const maxY1 = normalPDF(mean1, mean1, sd1);
-            const maxY2 = normalPDF(mean2, mean2, sd2);
-            const yMax = Math.max(maxY1, maxY2) * 1.1;
+            const yMax = Math.max(normalPDF(mean1, mean1, sd1), normalPDF(mean2, mean2, sd2)) * 1.1;
 
-            // Draw axes
-            groupsCtx.strokeStyle = '#333';
-            groupsCtx.lineWidth = 1;
+            // Baseline
+            groupsCtx.strokeStyle = '#ccc';
             groupsCtx.beginPath();
-            groupsCtx.moveTo(padding, padding);
-            groupsCtx.lineTo(padding, padding + plotHeight);
-            groupsCtx.lineTo(padding + plotWidth, padding + plotHeight);
+            groupsCtx.moveTo(pad, pad + pxH);
+            groupsCtx.lineTo(pad + pxW, pad + pxH);
             groupsCtx.stroke();
 
-            // Draw Group 1 (blue)
+            // Group 1
             groupsCtx.strokeStyle = '#2563eb';
-            groupsCtx.lineWidth = 3;
+            groupsCtx.fillStyle = 'rgba(37, 99, 235, 0.2)';
+            groupsCtx.lineWidth = 2;
             groupsCtx.beginPath();
-            for (let i = 0; i <= plotWidth; i++) {
-                const x = xMin + (i / plotWidth) * xRange;
+            for (let i = 0; i <= pxW; i++) {
+                const x = xMin + (i / pxW) * xRange;
                 const y = normalPDF(x, mean1, sd1);
-                const canvasX = padding + i;
-                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
-                
-                if (i === 0) {
-                    groupsCtx.moveTo(canvasX, canvasY);
-                } else {
-                    groupsCtx.lineTo(canvasX, canvasY);
-                }
+                groupsCtx[i===0?'moveTo':'lineTo'](pad + i, pad + pxH - (y / yMax) * pxH);
             }
             groupsCtx.stroke();
+            groupsCtx.lineTo(pad + pxW, pad + pxH);
+            groupsCtx.lineTo(pad, pad + pxH);
+            groupsCtx.fill();
 
-            // Draw Group 2 (red)
+            // Group 2
             groupsCtx.strokeStyle = '#dc2626';
-            groupsCtx.lineWidth = 3;
+            groupsCtx.fillStyle = 'rgba(220, 38, 38, 0.2)';
+            groupsCtx.lineWidth = 2;
             groupsCtx.beginPath();
-            for (let i = 0; i <= plotWidth; i++) {
-                const x = xMin + (i / plotWidth) * xRange;
+            for (let i = 0; i <= pxW; i++) {
+                const x = xMin + (i / pxW) * xRange;
                 const y = normalPDF(x, mean2, sd2);
-                const canvasX = padding + i;
-                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
-                
-                if (i === 0) {
-                    groupsCtx.moveTo(canvasX, canvasY);
-                } else {
-                    groupsCtx.lineTo(canvasX, canvasY);
-                }
+                groupsCtx[i===0?'moveTo':'lineTo'](pad + i, pad + pxH - (y / yMax) * pxH);
             }
             groupsCtx.stroke();
+            groupsCtx.lineTo(pad + pxW, pad + pxH);
+            groupsCtx.lineTo(pad, pad + pxH);
+            groupsCtx.fill();
 
-            // Add labels and legend
-            groupsCtx.fillStyle = '#333';
-            groupsCtx.font = '12px Arial';
-            
-            // X-axis labels
-            const numLabels = 5;
-            for (let i = 0; i <= numLabels; i++) {
-                const x = xMin + (i / numLabels) * xRange;
-                const canvasX = padding + (i / numLabels) * plotWidth;
-                groupsCtx.fillText(x.toFixed(1), canvasX - 10, padding + plotHeight + 20);
+            // X-labels
+            groupsCtx.fillStyle = '#666';
+            groupsCtx.font = '11px Arial';
+            groupsCtx.textAlign = 'center';
+            for (let i = 0; i <= 5; i++) {
+                const x = xMin + (i / 5) * xRange;
+                groupsCtx.fillText(x.toFixed(1), pad + (i / 5) * pxW, pad + pxH + 15);
             }
-
-            // Legend
-            groupsCtx.fillStyle = '#2563eb';
-            groupsCtx.fillText(`Group 1: μ=${mean1}, σ=${sd1}`, padding, 30);
-            groupsCtx.fillStyle = '#dc2626';
-            groupsCtx.fillText(`Group 2: μ=${mean2}, σ=${sd2}`, padding, 50);
         }
 
         function drawTDistribution() {
+            const w = tDistCanvas.parentElement.getBoundingClientRect().width;
+            const h = tDistCanvas.parentElement.getBoundingClientRect().height;
+            if (!w || !h) return;
+
             const { tStat, df } = calculateTTest();
+            tDistCtx.clearRect(0, 0, w, h);
 
-            // Clear canvas
-            tDistCtx.clearRect(0, 0, tDistCanvas.width, tDistCanvas.height);
-
-            // Set up coordinate system
-            const padding = 60;
-            const plotWidth = tDistCanvas.width - 2 * padding;
-            const plotHeight = tDistCanvas.height - 2 * padding;
+            const pad = 35;
+            const pxW = w - 2 * pad;
+            const pxH = h - 2 * pad;
             
-            const xMin = -4;
-            const xMax = 4;
-            const xRange = xMax - xMin;
-            const yMax = tPDF(0, df) * 1.1;
+            const xMin = -4, xMax = 4, xRange = xMax - xMin;
+            const displayDf = df < 1 ? 1 : df;
+            const yMax = tPDF(0, displayDf) * 1.1;
 
-            // Draw axes
-            tDistCtx.strokeStyle = '#333';
-            tDistCtx.lineWidth = 1;
+            // Baseline
+            tDistCtx.strokeStyle = '#ccc';
             tDistCtx.beginPath();
-            tDistCtx.moveTo(padding, padding);
-            tDistCtx.lineTo(padding, padding + plotHeight);
-            tDistCtx.lineTo(padding + plotWidth, padding + plotHeight);
+            tDistCtx.moveTo(pad, pad + pxH);
+            tDistCtx.lineTo(pad + pxW, pad + pxH);
             tDistCtx.stroke();
 
-            // Draw t-distribution
+            // Curve
             tDistCtx.strokeStyle = '#6b7280';
             tDistCtx.lineWidth = 2;
             tDistCtx.beginPath();
-            for (let i = 0; i <= plotWidth; i++) {
-                const x = xMin + (i / plotWidth) * xRange;
-                const y = tPDF(x, df);
-                const canvasX = padding + i;
-                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
+            for (let i = 0; i <= pxW; i++) {
+                const x = xMin + (i / pxW) * xRange;
+                tDistCtx.lineTo(pad + i, pad + pxH - (tPDF(x, displayDf) / yMax) * pxH);
+            }
+            tDistCtx.stroke();
+
+            // Critical regions
+            const critV = 1.96;
+            tDistCtx.fillStyle = 'rgba(220, 53, 69, 0.4)';
+            
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(pad, pad + pxH);
+            for (let x = xMin; x <= -critV; x += 0.1) tDistCtx.lineTo(pad + ((x - xMin) / xRange) * pxW, pad + pxH - (tPDF(x, displayDf) / yMax) * pxH);
+            tDistCtx.lineTo(pad + ((-critV - xMin) / xRange) * pxW, pad + pxH);
+            tDistCtx.fill();
+
+            tDistCtx.beginPath();
+            tDistCtx.moveTo(pad + ((critV - xMin) / xRange) * pxW, pad + pxH);
+            for (let x = critV; x <= xMax; x += 0.1) tDistCtx.lineTo(pad + ((x - xMin) / xRange) * pxW, pad + pxH - (tPDF(x, displayDf) / yMax) * pxH);
+            tDistCtx.lineTo(pad + pxW, pad + pxH);
+            tDistCtx.fill();
+
+            // T-stat line
+            const tStatX = pad + ((tStat - xMin) / xRange) * pxW;
+            if(tStatX >= pad && tStatX <= pad + pxW) {
+                tDistCtx.strokeStyle = '#28a745';
+                tDistCtx.lineWidth = 3;
+                tDistCtx.beginPath();
+                tDistCtx.moveTo(tStatX, pad);
+                tDistCtx.lineTo(tStatX, pad + pxH);
+                tDistCtx.stroke();
                 
-                if (i === 0) {
-                    tDistCtx.moveTo(canvasX, canvasY);
-                } else {
-                    tDistCtx.lineTo(canvasX, canvasY);
-                }
-            }
-            tDistCtx.stroke();
-
-            // Draw critical regions (α = 0.05)
-            const criticalValue = 1.96; // Approximate for large df
-            tDistCtx.fillStyle = 'rgba(220, 38, 38, 0.3)';
-            
-            // Left tail
-            tDistCtx.beginPath();
-            tDistCtx.moveTo(padding, padding + plotHeight);
-            for (let x = xMin; x <= -criticalValue; x += 0.1) {
-                const y = tPDF(x, df);
-                const canvasX = padding + ((x - xMin) / xRange) * plotWidth;
-                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
-                tDistCtx.lineTo(canvasX, canvasY);
-            }
-            tDistCtx.lineTo(padding + ((-criticalValue - xMin) / xRange) * plotWidth, padding + plotHeight);
-            tDistCtx.fill();
-
-            // Right tail
-            tDistCtx.beginPath();
-            tDistCtx.moveTo(padding + ((criticalValue - xMin) / xRange) * plotWidth, padding + plotHeight);
-            for (let x = criticalValue; x <= xMax; x += 0.1) {
-                const y = tPDF(x, df);
-                const canvasX = padding + ((x - xMin) / xRange) * plotWidth;
-                const canvasY = padding + plotHeight - (y / yMax) * plotHeight;
-                tDistCtx.lineTo(canvasX, canvasY);
-            }
-            tDistCtx.lineTo(padding + plotWidth, padding + plotHeight);
-            tDistCtx.fill();
-
-            // Draw test statistic line
-            const tStatX = padding + ((tStat - xMin) / xRange) * plotWidth;
-            tDistCtx.strokeStyle = '#059669';
-            tDistCtx.lineWidth = 3;
-            tDistCtx.beginPath();
-            tDistCtx.moveTo(tStatX, padding);
-            tDistCtx.lineTo(tStatX, padding + plotHeight);
-            tDistCtx.stroke();
-
-            // Add labels
-            tDistCtx.fillStyle = '#333';
-            tDistCtx.font = '12px Arial';
-            
-            // X-axis labels
-            const numLabels = 4;
-            for (let i = 0; i <= numLabels; i++) {
-                const x = xMin + (i / numLabels) * xRange;
-                const canvasX = padding + (i / numLabels) * plotWidth;
-                tDistCtx.fillText(x.toFixed(1), canvasX - 5, padding + plotHeight + 20);
+                tDistCtx.fillStyle = '#28a745';
+                tDistCtx.textAlign = 'center';
+                tDistCtx.font = 'bold 12px Arial';
+                tDistCtx.fillText(`t = ${tStat.toFixed(2)}`, tStatX, pad - 5);
             }
 
-            // Test statistic label
-            tDistCtx.fillStyle = '#059669';
-            tDistCtx.font = 'bold 12px Arial';
-            tDistCtx.fillText(`t = ${tStat.toFixed(3)}`, tStatX + 5, padding + 20);
-        }
-
-        function updateStatistics() {
-            const { tStat, df, pValue, cohensD } = calculateTTest();
-            
-            document.getElementById('t-stat').textContent = tStat.toFixed(3);
-            document.getElementById('df').textContent = Math.round(df);
-            document.getElementById('p-value').textContent = pValue.toFixed(3);
-            document.getElementById('effect-size').textContent = cohensD.toFixed(3);
-
-            // Update p-value significance
-            const pElement = document.getElementById('p-value');
-            if (pValue < 0.05) {
-                pElement.className = 'stat-value p-value significant';
-            } else {
-                pElement.className = 'stat-value p-value not-significant';
-            }
-
-            // Update variance assumption check
-            const sd1 = parseFloat(document.getElementById('sd1').value);
-            const sd2 = parseFloat(document.getElementById('sd2').value);
-            const varianceRatio = Math.max(sd1, sd2) / Math.min(sd1, sd2);
-            const varianceStatus = document.getElementById('variance-status');
-            
-            if (varianceRatio <= 2) {
-                varianceStatus.textContent = '✓ Equal variances';
-                varianceStatus.className = 'status-ok';
-            } else {
-                varianceStatus.textContent = '⚠ Unequal variances';
-                varianceStatus.className = 'status-warning';
+            // X-labels
+            tDistCtx.fillStyle = '#666';
+            tDistCtx.font = '11px Arial';
+            tDistCtx.textAlign = 'center';
+            for (let i = 0; i <= 8; i++) {
+                const x = xMin + (i / 8) * xRange;
+                tDistCtx.fillText(x.toFixed(1), pad + (i / 8) * pxW, pad + pxH + 15);
             }
         }
 
         function updateDisplay() {
-            // Update slider value displays
             document.getElementById('mean1-value').textContent = document.getElementById('mean1').value;
             document.getElementById('sd1-value').textContent = document.getElementById('sd1').value;
             document.getElementById('n1-value').textContent = document.getElementById('n1').value;
@@ -758,73 +725,50 @@
             document.getElementById('sd2-value').textContent = document.getElementById('sd2').value;
             document.getElementById('n2-value').textContent = document.getElementById('n2').value;
 
-            updateStatistics();
+            const { tStat, df, pValue, cohensD } = calculateTTest();
+            
+            document.getElementById('t-stat').textContent = isNaN(tStat) ? "0.00" : tStat.toFixed(3);
+            document.getElementById('df').textContent = isNaN(df) ? "0" : Math.max(1, Math.round(df));
+            document.getElementById('effect-size').textContent = isNaN(cohensD) ? "0.00" : cohensD.toFixed(2);
+            
+            const pElement = document.getElementById('p-value');
+            if (!isNaN(pValue)) {
+                pElement.textContent = pValue.toFixed(4);
+                pElement.className = pValue < 0.05 ? 'stat-value significant' : 'stat-value not-significant';
+            }
+
+            const sd1 = parseFloat(document.getElementById('sd1').value);
+            const sd2 = parseFloat(document.getElementById('sd2').value);
+            const ratio = Math.max(sd1, sd2) / Math.min(sd1, sd2);
+            const vStatus = document.getElementById('variance-status');
+            
+            if (ratio <= 2) {
+                vStatus.textContent = '✓ Equal variances';
+                vStatus.className = 'status-ok';
+            } else {
+                vStatus.textContent = '⚠ Unequal variances';
+                vStatus.className = 'status-warning';
+            }
+
             drawGroupsPlot();
             drawTDistribution();
         }
 
-        function loadScenario(scenario) {
-            switch (scenario) {
-                case 'no_difference':
-                    document.getElementById('mean1').value = 50;
-                    document.getElementById('mean2').value = 50;
-                    document.getElementById('sd1').value = 10;
-                    document.getElementById('sd2').value = 10;
-                    document.getElementById('n1').value = 30;
-                    document.getElementById('n2').value = 30;
-                    break;
-                    
-                case 'clear_difference':
-                    document.getElementById('mean1').value = 45;
-                    document.getElementById('mean2').value = 60;
-                    document.getElementById('sd1').value = 8;
-                    document.getElementById('sd2').value = 9;
-                    document.getElementById('n1').value = 40;
-                    document.getElementById('n2').value = 45;
-                    break;
-                    
-                case 'small_samples':
-                    document.getElementById('mean1').value = 48;
-                    document.getElementById('mean2').value = 58;
-                    document.getElementById('sd1').value = 12;
-                    document.getElementById('sd2').value = 11;
-                    document.getElementById('n1').value = 12;
-                    document.getElementById('n2').value = 15;
-                    break;
-                    
-                case 'large_samples':
-                    document.getElementById('mean1').value = 49;
-                    document.getElementById('mean2').value = 52;
-                    document.getElementById('sd1').value = 10;
-                    document.getElementById('sd2').value = 11;
-                    document.getElementById('n1').value = 80;
-                    document.getElementById('n2').value = 85;
-                    break;
-                    
-                case 'unequal_variances':
-                    document.getElementById('mean1').value = 50;
-                    document.getElementById('mean2').value = 55;
-                    document.getElementById('sd1').value = 8;
-                    document.getElementById('sd2').value = 18;
-                    document.getElementById('n1').value = 25;
-                    document.getElementById('n2').value = 30;
-                    break;
-            }
+        function loadScenario(s) {
+            const setVals = (m1, s1, n1, m2, s2, n2) => {
+                document.getElementById('mean1').value = m1; document.getElementById('sd1').value = s1; document.getElementById('n1').value = n1;
+                document.getElementById('mean2').value = m2; document.getElementById('sd2').value = s2; document.getElementById('n2').value = n2;
+            };
+            if(s === 'no_difference') setVals(50,10,30, 50,10,30);
+            if(s === 'clear_difference') setVals(45,8,40, 60,9,45);
+            if(s === 'small_samples') setVals(48,12,12, 58,11,15);
+            if(s === 'unequal_variances') setVals(50,8,25, 55,18,30);
             updateDisplay();
         }
 
-        // Event listeners
-        document.getElementById('mean1').addEventListener('input', updateDisplay);
-        document.getElementById('sd1').addEventListener('input', updateDisplay);
-        document.getElementById('n1').addEventListener('input', updateDisplay);
-        document.getElementById('mean2').addEventListener('input', updateDisplay);
-        document.getElementById('sd2').addEventListener('input', updateDisplay);
-        document.getElementById('n2').addEventListener('input', updateDisplay);
-
-        // Initialize
-        window.onload = function() {
-            updateDisplay();
-        };
+        ['mean1','sd1','n1','mean2','sd2','n2'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateDisplay);
+        });
     </script>
 </body>
 </html>
