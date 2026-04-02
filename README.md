@@ -2,11 +2,11 @@
 
 A collection of interactive teaching tools for statistics and finance concepts.
 
-## 🎯 Live Demo
+## Live Demo
 
-Visit: `https://jcaballe1.github.io/school-applets/`
+[Visit Demo](https://jcaballe1.github.io/school-applets/)
 
-## 📊 Available Applets
+## Available Applets
 
 ### Statistics
 - **Normal Distribution Explorer** - Visualize the bell curve and calculate probabilities
@@ -17,18 +17,18 @@ Visit: `https://jcaballe1.github.io/school-applets/`
 ### Finance
 - **Cash Flow Trap** - Learn why profitable businesses can still go bankrupt
 
-## 🚀 Usage
+## Usage
 
 Simply open `index.html` in your browser or visit the live site.
 
-## 🔧 Technology
+## Technology
 
 Pure HTML, CSS, and JavaScript - no dependencies required.
 
-## 📝 License
+## License
 
 Educational use only.
 
-## 👨‍🏫 Author
+## Author
 
-Andres Caballero
+Andres Caballero - `jcaballe@eafit.edu.co`
