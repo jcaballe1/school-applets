@@ -2,9 +2,7 @@
 
 A collection of interactive teaching tools for statistics and finance concepts.
 
-## Live Demo
-
-[Visit Demo](https://jcaballe1.github.io/school-applets/)
+## [Live Demo](https://jcaballe1.github.io/school-applets/)
 
 ## Available Applets
 
