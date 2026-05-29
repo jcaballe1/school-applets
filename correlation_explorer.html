@@ -381,6 +381,9 @@
                         <span><strong>Direction:</strong> <span id="directionText">None</span></span>
                         <span><strong>Linearity:</strong> <span id="linearityText">No correlation</span></span>
                     </div>
+                    <p id="rSquaredText" style="font-size: 0.85rem; color: #444; margin-top: 10px; line-height: 1.45;"></p>
+                    <p id="significanceText" style="font-size: 0.85rem; color: #444; margin-top: 6px; line-height: 1.45;"></p>
+                    <p id="cautionText" style="font-size: 0.8rem; color: #8a6d3b; background: #fcf8e3; border-radius: 5px; padding: 7px 9px; margin-top: 8px; line-height: 1.4;"></p>
                 </div>
 
                 <div class="statistics-details">
@@ -611,30 +614,124 @@
             return denominator === 0 ? 0 : numerator / denominator;
         }
 
+        // --- Helpers for the significance test on r (two-tailed) ---
+        function gammaFunction(z) {
+            if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gammaFunction(1 - z));
+            z -= 1;
+            const g = 7;
+            const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                       771.32342877765313, -176.61502916214059, 12.507343278686905,
+                       -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+            let x = c[0];
+            for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+            const t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, (z + 0.5)) * Math.exp(-t) * x;
+        }
+        function logGamma(z) { return Math.log(Math.abs(gammaFunction(z))); }
+        function betacf(x, a, b) {
+            const MAXIT = 200, EPS = 3e-12, FPMIN = 1e-300;
+            const qab = a + b, qap = a + 1, qam = a - 1;
+            let c = 1, d = 1 - qab * x / qap;
+            if (Math.abs(d) < FPMIN) d = FPMIN;
+            d = 1 / d; let h = d;
+            for (let m = 1; m <= MAXIT; m++) {
+                const m2 = 2 * m;
+                let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+                d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d; h *= d * c;
+                aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+                d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d; const del = d * c; h *= del;
+                if (Math.abs(del - 1) < EPS) break;
+            }
+            return h;
+        }
+        function regularizedIncompleteBeta(x, a, b) {
+            if (isNaN(x) || x <= 0) return 0;
+            if (x >= 1) return 1;
+            const front = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b)
+                + a * Math.log(x) + b * Math.log(1 - x));
+            return x < (a + 1) / (a + b + 2)
+                ? front * betacf(x, a, b) / a
+                : 1 - front * betacf(1 - x, b, a) / b;
+        }
+        // Two-tailed p-value for H0: rho = 0, using t = r*sqrt((n-2)/(1-r^2)).
+        function correlationPValue(r, n) {
+            if (n < 3 || Math.abs(r) >= 1) return Math.abs(r) >= 1 ? 0 : NaN;
+            const df = n - 2;
+            const t = r * Math.sqrt(df / (1 - r * r));
+            return regularizedIncompleteBeta(df / (t * t + df), df / 2, 0.5);
+        }
+
         function updateStatistics() {
             const n = points.length;
             const r = calculateCorrelation();
             
             document.getElementById('correlationValue').textContent = n >= 2 ? r.toFixed(3) : '--';
             document.getElementById('nPoints').textContent = n;
-            
+
+            const rSquaredText = document.getElementById('rSquaredText');
+            const significanceText = document.getElementById('significanceText');
+            const cautionText = document.getElementById('cautionText');
+
+            let degenerate = false;
             if (n >= 2) {
                 const meanX = points.reduce((sum, p) => sum + p.x, 0) / n;
                 const meanY = points.reduce((sum, p) => sum + p.y, 0) / n;
                 const sdX = Math.sqrt(points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0) / (n - 1));
                 const sdY = Math.sqrt(points.reduce((sum, p) => sum + (p.y - meanY) ** 2, 0) / (n - 1));
-                
+                degenerate = sdX === 0 || sdY === 0;
+
                 document.getElementById('meanX').textContent = meanX.toFixed(2);
                 document.getElementById('meanY').textContent = meanY.toFixed(2);
                 document.getElementById('sdX').textContent = sdX.toFixed(2);
                 document.getElementById('sdY').textContent = sdY.toFixed(2);
-                document.getElementById('rSquared').textContent = (r * r).toFixed(3);
+                document.getElementById('rSquared').textContent = degenerate ? 'undefined' : (r * r).toFixed(3);
+                if (degenerate) {
+                    document.getElementById('correlationValue').textContent = 'undefined';
+                }
             } else {
                 document.getElementById('meanX').textContent = '--';
                 document.getElementById('meanY').textContent = '--';
                 document.getElementById('sdX').textContent = '--';
                 document.getElementById('sdY').textContent = '--';
                 document.getElementById('rSquared').textContent = '--';
+            }
+
+            // Plain-language interpretation, significance, and caveats.
+            if (n < 2) {
+                rSquaredText.textContent = 'Add at least two points to compute a correlation.';
+                significanceText.textContent = '';
+                cautionText.textContent = '';
+            } else if (degenerate) {
+                rSquaredText.textContent = 'All points share the same X or Y value, so r is undefined (no spread to correlate).';
+                significanceText.textContent = '';
+                cautionText.textContent = '';
+            } else {
+                const rSq = r * r;
+                rSquaredText.innerHTML = '<strong>R&#178; = ' + rSq.toFixed(3) + '</strong>: about <strong>' +
+                    (rSq * 100).toFixed(0) + '%</strong> of the variation in Y is explained by its linear relationship with X.';
+
+                if (n >= 3) {
+                    const p = correlationPValue(r, n);
+                    if (p < 0.05) {
+                        significanceText.innerHTML = 'With n = ' + n + ', this r is <strong>statistically significant</strong> (p = ' +
+                            (p < 0.001 ? '&lt;0.001' : p.toFixed(3)) + '): unlikely to arise from chance if there were no real association.';
+                    } else {
+                        significanceText.innerHTML = 'With n = ' + n + ', this r is <strong>not statistically significant</strong> (p = ' +
+                            p.toFixed(3) + '): it could plausibly arise by chance.';
+                    }
+                } else {
+                    significanceText.textContent = 'Add at least three points to test significance.';
+                }
+
+                if (Math.abs(r) < 0.3) {
+                    cautionText.textContent = 'A low r only rules out a linear pattern. A strong curved relationship can still exist — Pearson\u2019s r would miss it.';
+                } else {
+                    cautionText.textContent = 'Correlation does not imply causation: a strong r does not mean X causes Y.';
+                }
             }
             
             // Update interpretation

@@ -359,6 +359,31 @@
 
         const euro = v => '\u20AC' + Math.round(v).toLocaleString('en-US');
 
+        // Persistent ("sticky") axis bounds. They stay put while the user nudges the
+        // sliders so the change shows up as moving lines and a shifting break-even
+        // point, not as a rescaling axis. They only snap to a new value when the
+        // scene drifts out of a comfortable band (see chooseBound).
+        let axisXMax = null;
+        let axisYMax = null;
+
+        // Round a value up to a "nice" number: 1, 2, 5 x 10^n.
+        function niceCeil(v) {
+            if (!(v > 0)) return 1;
+            const mag = Math.pow(10, Math.floor(Math.log10(v)));
+            const f = v / mag;
+            const step = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+            return step * mag;
+        }
+
+        // Keep the current bound unless the target is too big to fit (> 95%) or so
+        // small that the scene uses less than 40% of the axis. This hysteresis stops
+        // the axis from rescaling on every small slider move.
+        function chooseBound(current, target) {
+            if (current === null) return niceCeil(target);
+            if (target > current * 0.95 || target < current * 0.40) return niceCeil(target);
+            return current;
+        }
+
         // Render the static derivation steps with KaTeX once the library has loaded.
         function renderStaticMath() {
             if (!window.katex) return;
@@ -475,27 +500,42 @@
                 revenueTile.classList.add('warn');
             }
 
-            // X-axis range: show a bit beyond the break-even point (or a sensible default).
-            const maxUnits = profitable ? Math.max(20, Math.ceil(breakEvenUnits * 2)) : 200;
+            // Decide the visible window. We want the break-even point comfortably
+            // inside the plot (around 60% across) with headroom above it, so the
+            // lines and the intersection have room to move before a rescale.
+            let targetUnits, targetEuros;
+            if (profitable) {
+                targetUnits = breakEvenUnits * 1.6;
+                targetEuros = breakEvenRevenue * 1.6;
+            } else {
+                // No intersection: frame a sensible default and follow the cost line.
+                targetUnits = 200;
+                targetEuros = fixedCosts + variableCost * targetUnits;
+            }
 
-            // Two endpoints are enough: revenue and cost are straight lines.
+            axisXMax = chooseBound(axisXMax, Math.max(20, targetUnits));
+            axisYMax = chooseBound(axisYMax, Math.max(1000, targetEuros));
+
+            // Draw each straight line to the edge of the fixed window. Values that
+            // exceed axisYMax are simply clipped at the top of the plot.
             const revenueData = [
                 { x: 0, y: 0 },
-                { x: maxUnits, y: sellingPrice * maxUnits }
+                { x: axisXMax, y: sellingPrice * axisXMax }
             ];
             const totalCostData = [
                 { x: 0, y: fixedCosts },
-                { x: maxUnits, y: fixedCosts + variableCost * maxUnits }
+                { x: axisXMax, y: fixedCosts + variableCost * axisXMax }
             ];
             const fixedCostData = [
                 { x: 0, y: fixedCosts },
-                { x: maxUnits, y: fixedCosts }
+                { x: axisXMax, y: fixedCosts }
             ];
 
             breakEvenChart.data.datasets[0].data = revenueData;
             breakEvenChart.data.datasets[1].data = totalCostData;
             breakEvenChart.data.datasets[2].data = fixedCostData;
-            breakEvenChart.options.scales.x.max = maxUnits;
+            breakEvenChart.options.scales.x.max = axisXMax;
+            breakEvenChart.options.scales.y.max = axisYMax;
 
             const annotations = {};
             if (profitable) {
@@ -526,7 +566,7 @@
                     backgroundColor: 'rgba(255,255,255,0.85)',
                     padding: 4,
                     yAdjust: -26,
-                    xAdjust: breakEvenUnits > maxUnits * 0.7 ? -40 : 40
+                    xAdjust: breakEvenUnits > axisXMax * 0.7 ? -40 : 40
                 };
             }
             breakEvenChart.options.plugins.annotation = { annotations };

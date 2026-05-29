@@ -425,6 +425,7 @@
                         <span>p-value (<span id="lblP"></span>):</span>
                         <span class="p-value-display"><span class="stat-value significant" id="p-value">0.000</span></span>
                     </div>
+                    <p id="conclusion" style="margin-top: 0.6rem; font-size: 0.82rem; line-height: 1.45; color: var(--color-text-secondary);"></p>
                 </div>
 
                 <div class="panel formula-display">
@@ -556,6 +557,11 @@
             const se1 = (sd1 * sd1) / n1;
             const se2 = (sd2 * sd2) / n2;
             const sePooled = Math.sqrt(se1 + se2);
+
+            // Degenerate case: no spread in either group -> the test is undefined.
+            if (sePooled === 0) {
+                return { tStat: NaN, df: NaN, pValue: NaN, cohensD: NaN };
+            }
             
             const tStat = (mean1 - mean2) / sePooled;
             const df = Math.pow(se1 + se2, 2) / (Math.pow(se1, 2) / (n1 - 1) + Math.pow(se2, 2) / (n2 - 1));
@@ -564,15 +570,54 @@
             const cohensD = (mean1 - mean2) / pooledSD;
             
             const x = df / (tStat * tStat + df);
-            const pValue = 2 * (1 - (1 - 0.5 * incompleteBeta(x, df/2, 0.5)));
+            // Two-tailed p-value for Student's t: p = I_x(df/2, 1/2),
+            // where I is the regularized incomplete beta function.
+            const pValue = regularizedIncompleteBeta(x, df / 2, 0.5);
             
             return { tStat, df, pValue, cohensD };
         }
 
-        function incompleteBeta(x, a, b) {
-            if (x === 0 || isNaN(x)) return 0;
-            if (x === 1) return 1;
-            return Math.pow(x, a) * Math.pow(1 - x, b) / (a + b);
+        // Regularized incomplete beta function I_x(a,b) via the Lentz continued
+        // fraction (Numerical Recipes). Used for the t-distribution CDF / p-values.
+        function logGamma(z) {
+            return Math.log(Math.abs(gammaFunction(z)));
+        }
+
+        function betacf(x, a, b) {
+            const MAXIT = 200, EPS = 3e-12, FPMIN = 1e-300;
+            const qab = a + b, qap = a + 1, qam = a - 1;
+            let c = 1;
+            let d = 1 - qab * x / qap;
+            if (Math.abs(d) < FPMIN) d = FPMIN;
+            d = 1 / d;
+            let h = d;
+            for (let m = 1; m <= MAXIT; m++) {
+                const m2 = 2 * m;
+                let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+                d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d; h *= d * c;
+                aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+                d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+                c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+                d = 1 / d;
+                const del = d * c; h *= del;
+                if (Math.abs(del - 1) < EPS) break;
+            }
+            return h;
+        }
+
+        function regularizedIncompleteBeta(x, a, b) {
+            if (isNaN(x) || x <= 0) return 0;
+            if (x >= 1) return 1;
+            const front = Math.exp(
+                logGamma(a + b) - logGamma(a) - logGamma(b)
+                + a * Math.log(x) + b * Math.log(1 - x)
+            );
+            if (x < (a + 1) / (a + b + 2)) {
+                return front * betacf(x, a, b) / a;
+            }
+            return 1 - front * betacf(1 - x, b, a) / b;
         }
 
         function drawGroupsPlot() {
@@ -729,12 +774,32 @@
             
             document.getElementById('t-stat').textContent = isNaN(tStat) ? "0.00" : tStat.toFixed(3);
             document.getElementById('df').textContent = isNaN(df) ? "0" : Math.max(1, Math.round(df));
-            document.getElementById('effect-size').textContent = isNaN(cohensD) ? "0.00" : cohensD.toFixed(2);
+
+            // Cohen's d with a verbal magnitude label (Cohen, 1988).
+            const absD = Math.abs(cohensD);
+            let dLabel = 'negligible';
+            if (absD >= 0.8) dLabel = 'large';
+            else if (absD >= 0.5) dLabel = 'medium';
+            else if (absD >= 0.2) dLabel = 'small';
+            document.getElementById('effect-size').textContent =
+                isNaN(cohensD) ? "0.00" : cohensD.toFixed(2) + ' (' + dLabel + ')';
             
             const pElement = document.getElementById('p-value');
-            if (!isNaN(pValue)) {
+            const conclusion = document.getElementById('conclusion');
+            const degenerate = isNaN(pValue) || isNaN(tStat);
+            if (!degenerate) {
                 pElement.textContent = pValue.toFixed(4);
                 pElement.className = pValue < 0.05 ? 'stat-value significant' : 'stat-value not-significant';
+
+                if (pValue < 0.05) {
+                    conclusion.innerHTML = 'Since p &lt; 0.05, we <strong>reject H&#8320;</strong>: the difference between the group means is statistically significant. The effect size is <strong>' + dLabel + '</strong>.';
+                } else {
+                    conclusion.innerHTML = 'Since p &ge; 0.05, we <strong>fail to reject H&#8320;</strong>: there is not enough evidence of a real difference between the group means. The effect size is <strong>' + dLabel + '</strong>.';
+                }
+            } else {
+                pElement.textContent = '\u2014';
+                pElement.className = 'stat-value';
+                conclusion.textContent = 'With both standard deviations at zero the test is undefined. Increase at least one group\u2019s spread.';
             }
 
             const sd1 = parseFloat(document.getElementById('sd1').value);

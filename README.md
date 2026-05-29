@@ -11,6 +11,7 @@ A collection of interactive teaching tools for statistics and finance concepts.
 - **Correlation Explorer** - Interactive scatter plots with Pearson correlation
 - **T-Test Explorer** - Compare means of two independent groups
 - **Chi-Square Test Explorer** - Test independence in contingency tables
+- **Hypothesis Testing Explorer** - The logic of significance tests: rejection region, p-value, Type I/II errors, and power
 
 ### Finance
 - **Cash Flow Trap** - Learn why profitable businesses can still go bankrupt

@@ -497,6 +497,9 @@
                     <span id="significance-text">Variables appear to be independent (fail to reject <span id="sigH0"></span>)</span>
                 </div>
 
+                <p id="conclusion-text" style="font-size: 0.82rem; color: #444; line-height: 1.45; margin: 8px 0 0 0;"></p>
+                <p id="reliability-note" style="font-size: 0.8rem; color: #8a6d3b; background: #fcf8e3; border-radius: 5px; padding: 7px 9px; margin: 8px 0 0 0; line-height: 1.4; display: none;"></p>
+
                 <div class="assumptions-check">
                     <h3>Assumptions Check</h3>
                     <div class="assumption-item">
@@ -771,7 +774,26 @@
 
         function updateResults() {
             const { chiSquare } = calculateChiSquare();
+            const { grandTotal } = calculateTotals();
             const df = 1; // (2-1) × (2-1)
+            const conclusionText = document.getElementById('conclusion-text');
+            const reliabilityNote = document.getElementById('reliability-note');
+
+            // Guard: a zero row/column total makes an expected count zero, so chi-square
+            // is undefined (division by zero). Detect via a non-finite statistic.
+            if (!isFinite(chiSquare) || grandTotal === 0) {
+                document.getElementById('chi-square-stat').textContent = '\u2014';
+                document.getElementById('df-result').textContent = df;
+                document.getElementById('p-value-result').textContent = '\u2014';
+                document.getElementById('critical-value').textContent = (3.841).toFixed(3);
+                const indicator = document.getElementById('significance-indicator');
+                indicator.className = 'significance-indicator sig-not-significant';
+                document.getElementById('significance-text').textContent = 'Test undefined';
+                conclusionText.textContent = 'A whole row or column totals zero, so an expected frequency is zero and the chi-square statistic is undefined. Enter counts in every margin.';
+                reliabilityNote.style.display = 'none';
+                return;
+            }
+
             const pValue = 1 - chiSquareCDF(chiSquare, df);
             const criticalValue = 3.841; // Chi-square critical value for df=1, α=0.05
             
@@ -787,15 +809,33 @@
             if (pValue < 0.05) {
                 significanceIndicator.className = 'significance-indicator sig-significant';
                 document.getElementById('significance-text').innerHTML = 'Variables are significantly associated (reject ' + h0Span + ')';
+                conclusionText.innerHTML = 'Since p = ' + pValue.toFixed(3) + ' &lt; 0.05 (or &chi;&#178; = ' + chiSquare.toFixed(2) +
+                    ' &gt; ' + criticalValue.toFixed(2) + '), we <strong>reject H&#8320;</strong>: the two variables are associated, not independent.';
             } else {
                 significanceIndicator.className = 'significance-indicator sig-not-significant';
                 document.getElementById('significance-text').innerHTML = 'Variables appear to be independent (fail to reject ' + h0Span + ')';
+                conclusionText.innerHTML = 'Since p = ' + pValue.toFixed(3) + ' &ge; 0.05 (or &chi;&#178; = ' + chiSquare.toFixed(2) +
+                    ' &lt; ' + criticalValue.toFixed(2) + '), we <strong>fail to reject H&#8320;</strong>: no evidence that the variables are associated.';
             }
             
             // Re-render H0 in significance text
             const sigH0Element = document.getElementById('sigH0');
             if (sigH0Element) {
                 katex.render("H_0", sigH0Element, { displayMode: false, throwOnError: false });
+            }
+
+            // Consequence of violating the expected-frequency assumption.
+            const expected = calculateExpected();
+            let minExpected = Infinity;
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 2; j++) minExpected = Math.min(minExpected, expected[i][j]);
+            }
+            if (minExpected < 5) {
+                reliabilityNote.style.display = 'block';
+                reliabilityNote.innerHTML = 'An expected count is below 5 (smallest \u2248 ' + minExpected.toFixed(1) +
+                    '), so the &chi;&#178; approximation is unreliable here. Combine categories or use Fisher\u2019s exact test.';
+            } else {
+                reliabilityNote.style.display = 'none';
             }
         }
 

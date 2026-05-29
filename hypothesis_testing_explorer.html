@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis Testing Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <style>
+        :root {
+            --color-primary: #1e3a5f;
+            --color-primary-light: #2d5a8c;
+            --color-accent: #0066cc;
+            --color-accent-light: #e6f2ff;
+            --color-background: #f8f9fa;
+            --color-surface: #ffffff;
+            --color-border: #dee2e6;
+            --color-text: #212529;
+            --color-text-secondary: #6c757d;
+            --color-h0: #2d5a8c;
+            --color-h1: #d97706;
+            --color-reject: #dc2626;
+            --color-power: #16a34a;
+            --border-radius: 8px;
+            --transition: all 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.5;
+            padding: 0.75rem;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
+        .header p { font-size: 0.95rem; opacity: 0.92; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.7fr 1fr 1.15fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
+        }
+
+        .column { display: flex; flex-direction: column; gap: 0.6rem; }
+
+        .panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: 0.6rem 0.7rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .panel h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--color-text);
+        }
+
+        .plot-title {
+            text-align: center;
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+        .plot-sub {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.2rem;
+        }
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 6.6;
+            min-height: 180px;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* Controls */
+        .slider-container { margin-bottom: 0.45rem; }
+        .slider-container:last-child { margin-bottom: 0; }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.2rem;
+            font-weight: 500;
+            font-size: 0.83rem;
+        }
+        .slider-label .katex { font-size: 0.83rem !important; }
+        .slider-value {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.1rem 0.6rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            min-width: 52px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .slider {
+            width: 100%; height: 7px; border-radius: 4px;
+            background: var(--color-border); outline: none;
+            -webkit-appearance: none; appearance: none; cursor: pointer;
+        }
+        .slider:focus { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--color-accent); cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--color-accent); border: none; cursor: pointer;
+        }
+
+        .tail-group { display: flex; gap: 0.35rem; }
+        .tail-btn {
+            flex: 1;
+            padding: 0.35rem 0.2rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-family: inherit;
+            color: var(--color-text);
+            transition: var(--transition);
+        }
+        .tail-btn:hover { border-color: var(--color-accent); }
+        .tail-btn.active {
+            background: var(--color-accent);
+            color: white;
+            border-color: var(--color-accent);
+        }
+
+        .hypotheses {
+            background: var(--color-accent-light);
+            border: 1px solid #bcdcff;
+            border-radius: 6px;
+            padding: 0.45rem 0.6rem;
+            font-size: 0.9rem;
+        }
+        .hypotheses div { margin: 0.15rem 0; display: flex; align-items: center; gap: 0.3rem; }
+
+        /* Results */
+        .results {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: white;
+        }
+        .results h3 { color: white; }
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.22rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.18);
+            font-size: 0.82rem;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row .katex { color: white; font-size: 0.82rem !important; }
+        .stat-value { font-weight: 700; font-size: 0.92rem; }
+
+        .decision-banner {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .decision-reject { background: #fde2e2; color: #b91c1c; }
+        .decision-fail { background: #e3eefc; color: #1e3a5f; }
+
+        .error-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4rem;
+            text-align: center;
+        }
+        .error-tile {
+            border-radius: 6px;
+            padding: 0.4rem 0.2rem;
+            border: 1px solid var(--color-border);
+        }
+        .error-tile .lbl { font-size: 0.68rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+        .error-tile .val { font-size: 1.05rem; font-weight: 700; }
+        .tile-alpha { background: #fff1f1; }
+        .tile-alpha .val { color: var(--color-reject); }
+        .tile-beta { background: #fff7ed; }
+        .tile-beta .val { color: var(--color-h1); }
+        .tile-power { background: #effaf1; }
+        .tile-power .val { color: var(--color-power); }
+
+        .interpretation {
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: #2f3a45;
+        }
+        .interpretation strong { color: var(--color-primary); }
+        .interpretation .hl { color: var(--color-reject); font-weight: 700; }
+
+        .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+        .preset-btn {
+            padding: 0.4rem 0.3rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.76rem;
+            font-family: inherit;
+            color: var(--color-text);
+            transition: var(--transition);
+        }
+        .preset-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+        details.guide summary {
+            cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            color: var(--color-accent); list-style: none; user-select: none;
+        }
+        details.guide summary::-webkit-details-marker { display: none; }
+        details.guide summary::before { content: "\25B8\00A0"; color: var(--color-text-secondary); }
+        details.guide[open] summary::before { content: "\25BE\00A0"; }
+        details.guide ul { margin: 0.4rem 0 0 1.1rem; font-size: 0.8rem; line-height: 1.5; color: #2f3a45; }
+        details.guide li { margin-bottom: 0.3rem; }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; font-size: 0.72rem; margin-top: 0.15rem; }
+        .legend span { display: inline-flex; align-items: center; gap: 0.25rem; }
+        .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+
+        @media (max-width: 1050px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Hypothesis Testing Explorer</h1>
+            <p>A one-sample z-test for a mean: see how the decision rule, the p-value, and the two types of error fit together.</p>
+        </div>
+
+        <div class="main-content">
+            <!-- LEFT: plots -->
+            <div class="column">
+                <div class="panel">
+                    <div class="plot-title">1 &middot; The Test &mdash; sampling distribution if H&#8320; is true</div>
+                    <div class="plot-sub">Where would the sample mean land if the null hypothesis held? Is our result in the rejection region?</div>
+                    <div class="canvas-wrapper"><canvas id="testCanvas"></canvas></div>
+                    <div class="legend">
+                        <span><span class="swatch" style="background:#2d5a8c"></span>H&#8320; distribution</span>
+                        <span><span class="swatch" style="background:rgba(220,38,38,0.5)"></span>Rejection region (&alpha;)</span>
+                        <span><span class="swatch" style="background:#16a34a"></span>Observed mean</span>
+                        <span><span class="swatch" style="background:rgba(217,119,6,0.45)"></span>p-value area</span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="plot-title">2 &middot; Errors &amp; Power &mdash; what if the true mean differs?</div>
+                    <div class="plot-sub">The orange curve is the sampling distribution if the true mean equals &mu;&#8348;&#8323;&#8364;&#8326;. Compare the two error types.</div>
+                    <div class="canvas-wrapper"><canvas id="powerCanvas"></canvas></div>
+                    <div class="legend">
+                        <span><span class="swatch" style="background:rgba(220,38,38,0.5)"></span>&alpha; &mdash; Type I error</span>
+                        <span><span class="swatch" style="background:rgba(217,119,6,0.45)"></span>&beta; &mdash; Type II error</span>
+                        <span><span class="swatch" style="background:rgba(22,163,74,0.5)"></span>Power = 1 &minus; &beta;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDDLE: controls -->
+            <div class="column">
+                <div class="panel">
+                    <h3>Hypotheses</h3>
+                    <div class="hypotheses">
+                        <div><span id="hypoH0"></span></div>
+                        <div><span id="hypoH1"></span></div>
+                    </div>
+                    <div style="margin-top:0.5rem;">
+                        <div class="slider-label"><span>Test direction</span></div>
+                        <div class="tail-group">
+                            <button class="tail-btn" data-tail="left" onclick="setTail('left')">Left-tailed</button>
+                            <button class="tail-btn active" data-tail="two" onclick="setTail('two')">Two-tailed</button>
+                            <button class="tail-btn" data-tail="right" onclick="setTail('right')">Right-tailed</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Null &amp; sample data</h3>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>Null mean (<span id="lblMu0"></span>)</span><span class="slider-value" id="mu0Val">100</span></div>
+                        <input type="range" id="mu0" class="slider" min="80" max="120" step="1" value="100">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>Observed sample mean (<span id="lblXbar"></span>)</span><span class="slider-value" id="xbarVal">106</span></div>
+                        <input type="range" id="xbar" class="slider" min="80" max="120" step="0.5" value="106">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>Population SD (<span id="lblSigma"></span>)</span><span class="slider-value" id="sigmaVal">15</span></div>
+                        <input type="range" id="sigma" class="slider" min="3" max="30" step="1" value="15">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>Sample size (<span id="lblN"></span>)</span><span class="slider-value" id="nVal">30</span></div>
+                        <input type="range" id="n" class="slider" min="5" max="120" step="1" value="30">
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Decision rule &amp; truth</h3>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>Significance level (<span id="lblAlpha"></span>)</span><span class="slider-value" id="alphaVal">0.05</span></div>
+                        <input type="range" id="alpha" class="slider" min="0.01" max="0.20" step="0.01" value="0.05">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>True mean for power (<span id="lblMuTrue"></span>)</span><span class="slider-value" id="muTrueVal">106</span></div>
+                        <input type="range" id="muTrue" class="slider" min="80" max="120" step="0.5" value="106">
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Example scenarios</h3>
+                    <div class="preset-grid">
+                        <button class="preset-btn" onclick="loadScenario('clear')">Clear effect</button>
+                        <button class="preset-btn" onclick="loadScenario('borderline')">Borderline p &asymp; &alpha;</button>
+                        <button class="preset-btn" onclick="loadScenario('null_true')">No real effect</button>
+                        <button class="preset-btn" onclick="loadScenario('underpowered')">Underpowered (small n)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: results & learning -->
+            <div class="column">
+                <div class="panel results">
+                    <h3>Test Results</h3>
+                    <div class="stat-row"><span>Standard error (<span id="lblSE"></span>)</span><span class="stat-value" id="seOut">2.74</span></div>
+                    <div class="stat-row"><span>Test statistic (<span id="lblZ"></span>)</span><span class="stat-value" id="zOut">2.19</span></div>
+                    <div class="stat-row"><span>Critical value(s)</span><span class="stat-value" id="critOut">&plusmn;1.96</span></div>
+                    <div class="stat-row"><span><span id="lblP"></span>-value</span><span class="stat-value" id="pOut">0.028</span></div>
+                    <div class="decision-banner decision-reject" id="decisionBanner">Reject H&#8320;</div>
+                </div>
+
+                <div class="panel">
+                    <h3>Error rates &amp; power</h3>
+                    <div class="error-grid">
+                        <div class="error-tile tile-alpha"><div class="lbl">&alpha; (Type I)</div><div class="val" id="alphaOut">0.050</div></div>
+                        <div class="error-tile tile-beta"><div class="lbl">&beta; (Type II)</div><div class="val" id="betaOut">0.49</div></div>
+                        <div class="error-tile tile-power"><div class="lbl">Power</div><div class="val" id="powerOut">0.51</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>What this means</h3>
+                    <p class="interpretation" id="interpretation"></p>
+                </div>
+
+                <div class="panel">
+                    <details class="guide">
+                        <summary>Exploration guide</summary>
+                        <ul>
+                            <li><strong>The p-value</strong> is the probability of a sample mean at least as extreme as the one observed, <em>assuming H&#8320; is true</em> &mdash; not the probability that H&#8320; is true.</li>
+                            <li>We <strong>reject H&#8320;</strong> exactly when the p-value &lt; &alpha;, i.e. when the observed mean falls in the red rejection region.</li>
+                            <li>Raise <strong>&alpha;</strong> and watch the rejection region grow: rejecting becomes easier, but the Type I error rate rises with it.</li>
+                            <li>Move the <strong>true mean</strong> away from the null and increase <strong>n</strong>: power rises and &beta; shrinks. This is why larger samples detect smaller effects.</li>
+                            <li>&ldquo;Fail to reject&rdquo; is <strong>not</strong> the same as &ldquo;accept H&#8320;&rdquo; &mdash; a low-power test often fails to reject even when H&#8320; is false.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- State ----------
+        let tail = 'two';
+
+        // ---------- Math helpers ----------
+        function normalPDF(x, mean, sd) {
+            return Math.exp(-0.5 * ((x - mean) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+        }
+        function erf(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741,
+                  a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x >= 0 ? 1 : -1;
+            x = Math.abs(x);
+            const t = 1 / (1 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+        function normalCDF(x, mean, sd) {
+            return 0.5 * (1 + erf((x - mean) / (sd * Math.SQRT2)));
+        }
+        // Inverse standard normal CDF (Acklam's rational approximation).
+        function invNorm(p) {
+            if (p <= 0) return -Infinity;
+            if (p >= 1) return Infinity;
+            const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
+                       1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+            const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+                       6.680131188771972e+01, -1.328068155288572e+01];
+            const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+                       -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+            const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+                       3.754408661907416e+00];
+            const plow = 0.02425, phigh = 1 - plow;
+            let q, r;
+            if (p < plow) {
+                q = Math.sqrt(-2 * Math.log(p));
+                return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                       ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+            } else if (p <= phigh) {
+                q = p - 0.5; r = q * q;
+                return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q /
+                       (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+            } else {
+                q = Math.sqrt(-2 * Math.log(1 - p));
+                return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                        ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+            }
+        }
+
+        // ---------- Inputs ----------
+        const ids = ['mu0', 'xbar', 'sigma', 'n', 'alpha', 'muTrue'];
+        const inputs = {};
+        ids.forEach(id => inputs[id] = document.getElementById(id));
+
+        function readState() {
+            const mu0 = parseFloat(inputs.mu0.value);
+            const xbar = parseFloat(inputs.xbar.value);
+            const sigma = parseFloat(inputs.sigma.value);
+            const n = parseInt(inputs.n.value);
+            const alpha = parseFloat(inputs.alpha.value);
+            const muTrue = parseFloat(inputs.muTrue.value);
+            const se = sigma / Math.sqrt(n);
+            const z = (xbar - mu0) / se;
+            return { mu0, xbar, sigma, n, alpha, muTrue, se, z };
+        }
+
+        // Critical values (in x-bar units) and p-value for the current tail.
+        function testQuantities(s) {
+            const { mu0, alpha, se, z } = s;
+            let lower = -Infinity, upper = Infinity, p, critText;
+            if (tail === 'two') {
+                const zc = invNorm(1 - alpha / 2);
+                lower = mu0 - zc * se; upper = mu0 + zc * se;
+                p = 2 * (1 - normalCDF(Math.abs(z), 0, 1));
+                critText = '\u00B1' + zc.toFixed(2);
+            } else if (tail === 'right') {
+                const zc = invNorm(1 - alpha);
+                upper = mu0 + zc * se;
+                p = 1 - normalCDF(z, 0, 1);
+                critText = '+' + zc.toFixed(2);
+            } else { // left
+                const zc = invNorm(1 - alpha);
+                lower = mu0 - zc * se;
+                p = normalCDF(z, 0, 1);
+                critText = '\u2212' + zc.toFixed(2);
+            }
+            const reject = p < alpha;
+            return { lower, upper, p, critText, reject };
+        }
+
+        // Power and beta using the true-mean distribution.
+        function powerQuantities(s, tq) {
+            const { muTrue, se } = s;
+            let power;
+            if (tail === 'two') {
+                power = normalCDF(tq.lower, muTrue, se) + (1 - normalCDF(tq.upper, muTrue, se));
+            } else if (tail === 'right') {
+                power = 1 - normalCDF(tq.upper, muTrue, se);
+            } else {
+                power = normalCDF(tq.lower, muTrue, se);
+            }
+            power = Math.min(1, Math.max(0, power));
+            return { power, beta: 1 - power };
+        }
+
+        // ---------- Canvas drawing ----------
+        const testCanvas = document.getElementById('testCanvas');
+        const powerCanvas = document.getElementById('powerCanvas');
+        const testCtx = testCanvas.getContext('2d');
+        const powerCtx = powerCanvas.getContext('2d');
+
+        function sizeCanvas(canvas, ctx) {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.max(1, Math.round(rect.width * dpr));
+            canvas.height = Math.max(1, Math.round(rect.height * dpr));
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return { w: rect.width, h: rect.height };
+        }
+
+        // Build a plotter over a shared data x-range.
+        function makePlot(ctx, w, h, xMin, xMax, yMax) {
+            const padL = 38, padR = 14, padT = 12, padB = 26;
+            const left = padL, right = w - padR, top = padT, bottom = h - padB;
+            const px = x => left + (x - xMin) / (xMax - xMin) * (right - left);
+            const py = y => bottom - (y / yMax) * (bottom - top);
+            return { ctx, left, right, top, bottom, px, py, xMin, xMax, yMax };
+        }
+
+        function drawAxis(P, mu0, muTrue, showTrue) {
+            const { ctx, left, right, bottom, top } = P;
+            ctx.strokeStyle = '#ced4da';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(left, bottom); ctx.lineTo(right, bottom);
+            ctx.stroke();
+            // x ticks at mu0 and (optionally) muTrue
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '11px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            const tick = (xv, label, color) => {
+                const x = P.px(xv);
+                ctx.strokeStyle = color; ctx.setLineDash([3, 3]); ctx.globalAlpha = 0.5;
+                ctx.beginPath(); ctx.moveTo(x, bottom); ctx.lineTo(x, top); ctx.stroke();
+                ctx.setLineDash([]); ctx.globalAlpha = 1;
+                ctx.fillStyle = color;
+                ctx.fillText(label, x, bottom + 14);
+            };
+            tick(mu0, '\u03BC\u2080 = ' + mu0, '#2d5a8c');
+            if (showTrue && Math.abs(P.px(muTrue) - P.px(mu0)) > 28) {
+                tick(muTrue, 'true ' + muTrue, '#d97706');
+            }
+        }
+
+        function curvePath(P, mean, sd) {
+            const { ctx, left, right } = P;
+            ctx.beginPath();
+            const steps = 240;
+            for (let i = 0; i <= steps; i++) {
+                const xpix = left + (right - left) * i / steps;
+                const xv = P.xMin + (P.xMax - P.xMin) * i / steps;
+                const yv = normalPDF(xv, mean, sd);
+                const ypix = P.py(yv);
+                if (i === 0) ctx.moveTo(xpix, ypix); else ctx.lineTo(xpix, ypix);
+            }
+        }
+
+        // Fill area under a normal curve between data-x [a, b].
+        function fillRegion(P, mean, sd, a, b, fill) {
+            const { ctx } = P;
+            a = Math.max(a, P.xMin); b = Math.min(b, P.xMax);
+            if (b <= a) return;
+            ctx.save();
+            ctx.beginPath();
+            const steps = 160;
+            for (let i = 0; i <= steps; i++) {
+                const xv = a + (b - a) * i / steps;
+                const xpix = P.px(xv), ypix = P.py(normalPDF(xv, mean, sd));
+                if (i === 0) ctx.moveTo(xpix, P.bottom);
+                ctx.lineTo(xpix, ypix);
+            }
+            ctx.lineTo(P.px(b), P.bottom);
+            ctx.closePath();
+            ctx.fillStyle = fill;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function strokeCurve(P, mean, sd, color, width) {
+            curvePath(P, mean, sd);
+            P.ctx.strokeStyle = color;
+            P.ctx.lineWidth = width;
+            P.ctx.stroke();
+        }
+
+        function drawTestPlot(s, tq) {
+            const { w, h } = sizeCanvas(testCanvas, testCtx);
+            const ctx = testCtx;
+            ctx.clearRect(0, 0, w, h);
+            const spanCenter = s.mu0;
+            const half = Math.max(4 * s.se, Math.abs(s.xbar - s.mu0) + 1.5 * s.se);
+            const xMin = spanCenter - half, xMax = spanCenter + half;
+            const yMax = normalPDF(s.mu0, s.mu0, s.se) * 1.12;
+            const P = makePlot(ctx, w, h, xMin, xMax, yMax);
+
+            // Rejection regions (alpha)
+            const rj = 'rgba(220,38,38,0.5)';
+            if (tail === 'two' || tail === 'left') fillRegion(P, s.mu0, s.se, xMin, tq.lower, rj);
+            if (tail === 'two' || tail === 'right') fillRegion(P, s.mu0, s.se, tq.upper, xMax, rj);
+
+            // p-value area (tail beyond the observed statistic)
+            const pv = 'rgba(217,119,6,0.45)';
+            if (tail === 'two') {
+                const d = Math.abs(s.xbar - s.mu0);
+                fillRegion(P, s.mu0, s.se, xMin, s.mu0 - d, pv);
+                fillRegion(P, s.mu0, s.se, s.mu0 + d, xMax, pv);
+            } else if (tail === 'right') {
+                fillRegion(P, s.mu0, s.se, s.xbar, xMax, pv);
+            } else {
+                fillRegion(P, s.mu0, s.se, xMin, s.xbar, pv);
+            }
+
+            strokeCurve(P, s.mu0, s.se, '#2d5a8c', 2);
+            drawAxis(P, s.mu0, s.muTrue, false);
+
+            // Critical lines
+            ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+            [tq.lower, tq.upper].forEach(c => {
+                if (isFinite(c) && c > xMin && c < xMax) {
+                    ctx.beginPath(); ctx.moveTo(P.px(c), P.bottom); ctx.lineTo(P.px(c), P.top); ctx.stroke();
+                }
+            });
+            ctx.setLineDash([]);
+
+            // Observed mean line
+            const ox = P.px(s.xbar);
+            ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(ox, P.bottom); ctx.lineTo(ox, P.top + 2); ctx.stroke();
+            ctx.fillStyle = '#16a34a'; ctx.font = 'bold 11px Segoe UI, sans-serif'; ctx.textAlign = 'center';
+            const lblX = Math.min(Math.max(ox, P.left + 24), P.right - 24);
+            ctx.fillText('x\u0304 = ' + s.xbar, lblX, P.top + 10);
+        }
+
+        function drawPowerPlot(s, tq, pw) {
+            const { w, h } = sizeCanvas(powerCanvas, powerCtx);
+            const ctx = powerCtx;
+            ctx.clearRect(0, 0, w, h);
+            const lo = Math.min(s.mu0, s.muTrue), hi = Math.max(s.mu0, s.muTrue);
+            const xMin = lo - 4 * s.se, xMax = hi + 4 * s.se;
+            const yMax = normalPDF(0, 0, s.se) * 1.12;
+            const P = makePlot(ctx, w, h, xMin, xMax, yMax);
+
+            // Beta (Type II): area of true-mean curve inside the acceptance region.
+            const beta = 'rgba(217,119,6,0.45)';
+            fillRegion(P, s.muTrue, s.se,
+                (tail === 'left') ? tq.lower : (isFinite(tq.lower) ? tq.lower : xMin),
+                (tail === 'right') ? tq.upper : (isFinite(tq.upper) ? tq.upper : xMax),
+                beta);
+
+            // Power: area of true-mean curve inside rejection region.
+            const powCol = 'rgba(22,163,74,0.5)';
+            if (tail === 'two' || tail === 'left') fillRegion(P, s.muTrue, s.se, xMin, tq.lower, powCol);
+            if (tail === 'two' || tail === 'right') fillRegion(P, s.muTrue, s.se, tq.upper, xMax, powCol);
+
+            // Alpha (Type I): rejection region under the null curve.
+            const al = 'rgba(220,38,38,0.5)';
+            if (tail === 'two' || tail === 'left') fillRegion(P, s.mu0, s.se, xMin, tq.lower, al);
+            if (tail === 'two' || tail === 'right') fillRegion(P, s.mu0, s.se, tq.upper, xMax, al);
+
+            strokeCurve(P, s.mu0, s.se, '#2d5a8c', 2);
+            strokeCurve(P, s.muTrue, s.se, '#d97706', 2);
+            drawAxis(P, s.mu0, s.muTrue, true);
+
+            // Critical lines
+            ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+            [tq.lower, tq.upper].forEach(c => {
+                if (isFinite(c) && c > xMin && c < xMax) {
+                    ctx.beginPath(); ctx.moveTo(P.px(c), P.bottom); ctx.lineTo(P.px(c), P.top); ctx.stroke();
+                }
+            });
+            ctx.setLineDash([]);
+        }
+
+        // ---------- Interpretation ----------
+        function buildInterpretation(s, tq, pw) {
+            const dir = tail === 'two' ? 'different from' : (tail === 'right' ? 'greater than' : 'less than');
+            const pStr = tq.p < 0.001 ? '< 0.001' : '= ' + tq.p.toFixed(3);
+            let txt = 'The observed mean of <strong>' + s.xbar + '</strong> gives a test statistic z = <strong>' +
+                s.z.toFixed(2) + '</strong> and a p-value <strong>' + pStr + '</strong>. ';
+            if (tq.reject) {
+                txt += 'Since p &lt; &alpha; = ' + s.alpha.toFixed(2) + ', we <span class="hl">reject H&#8320;</span>: ' +
+                    'there is significant evidence that the true mean is ' + dir + ' ' + s.mu0 + '. ';
+            } else {
+                txt += 'Since p &ge; &alpha; = ' + s.alpha.toFixed(2) + ', we <strong>fail to reject H&#8320;</strong>: ' +
+                    'not enough evidence that the true mean is ' + dir + ' ' + s.mu0 + '. ';
+            }
+            txt += 'If the true mean really were ' + s.muTrue + ', this test would correctly detect it ' +
+                '<strong>' + (pw.power * 100).toFixed(0) + '%</strong> of the time (power), ' +
+                'missing it (Type II error) <strong>' + (pw.beta * 100).toFixed(0) + '%</strong> of the time.';
+            if (pw.power < 0.5 && Math.abs(s.muTrue - s.mu0) > 0.01) {
+                txt += ' <span class="hl">Power is low</span> &mdash; increase n or the effect size to detect this difference reliably.';
+            }
+            return txt;
+        }
+
+        // ---------- KaTeX labels ----------
+        function renderLabels(s, tq) {
+            if (!window.katex) return;
+            const o = { throwOnError: false, displayMode: false };
+            const R = (tex, id) => { const el = document.getElementById(id); if (el) katex.render(tex, el, o); };
+            R('\\mu_0', 'lblMu0'); R('\\bar{x}', 'lblXbar'); R('\\sigma', 'lblSigma');
+            R('n', 'lblN'); R('\\alpha', 'lblAlpha'); R('\\mu_{\\text{true}}', 'lblMuTrue');
+            R('\\text{SE}', 'lblSE'); R('z', 'lblZ'); R('p', 'lblP');
+            // Hypotheses
+            const alt = tail === 'two' ? '\\neq' : (tail === 'right' ? '>' : '<');
+            R('H_0:\\ \\mu = ' + s.mu0, 'hypoH0');
+            R('H_1:\\ \\mu ' + alt + ' ' + s.mu0, 'hypoH1');
+        }
+
+        // ---------- Main update ----------
+        function update() {
+            const s = readState();
+            const tq = testQuantities(s);
+            const pw = powerQuantities(s, tq);
+
+            // Slider value chips
+            inputs.mu0 && (document.getElementById('mu0Val').textContent = s.mu0);
+            document.getElementById('xbarVal').textContent = s.xbar;
+            document.getElementById('sigmaVal').textContent = s.sigma;
+            document.getElementById('nVal').textContent = s.n;
+            document.getElementById('alphaVal').textContent = s.alpha.toFixed(2);
+            document.getElementById('muTrueVal').textContent = s.muTrue;
+
+            // Results
+            document.getElementById('seOut').textContent = s.se.toFixed(2);
+            document.getElementById('zOut').textContent = s.z.toFixed(2);
+            document.getElementById('critOut').textContent = tq.critText;
+            document.getElementById('pOut').textContent = tq.p < 0.001 ? '<0.001' : tq.p.toFixed(3);
+
+            const banner = document.getElementById('decisionBanner');
+            if (tq.reject) {
+                banner.className = 'decision-banner decision-reject';
+                banner.innerHTML = 'Reject H&#8320; (p < &alpha;)';
+            } else {
+                banner.className = 'decision-banner decision-fail';
+                banner.innerHTML = 'Fail to reject H&#8320; (p &ge; &alpha;)';
+            }
+
+            document.getElementById('alphaOut').textContent = s.alpha.toFixed(3);
+            document.getElementById('betaOut').textContent = pw.beta.toFixed(2);
+            document.getElementById('powerOut').textContent = pw.power.toFixed(2);
+
+            document.getElementById('interpretation').innerHTML = buildInterpretation(s, tq, pw);
+
+            drawTestPlot(s, tq);
+            drawPowerPlot(s, tq, pw);
+            renderLabels(s, tq);
+        }
+
+        // ---------- Controls ----------
+        function setTail(t) {
+            tail = t;
+            document.querySelectorAll('.tail-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.tail === t));
+            update();
+        }
+
+        function loadScenario(name) {
+            const set = (mu0, xbar, sigma, n, alpha, muTrue, t) => {
+                inputs.mu0.value = mu0; inputs.xbar.value = xbar; inputs.sigma.value = sigma;
+                inputs.n.value = n; inputs.alpha.value = alpha; inputs.muTrue.value = muTrue;
+                setTail(t);
+            };
+            if (name === 'clear')        set(100, 110, 15, 40, 0.05, 110, 'two');
+            else if (name === 'borderline') set(100, 104.3, 15, 30, 0.05, 104.3, 'two');
+            else if (name === 'null_true')  set(100, 100.5, 15, 30, 0.05, 100, 'two');
+            else if (name === 'underpowered') set(100, 103, 15, 8, 0.05, 105, 'two');
+        }
+
+        ids.forEach(id => inputs[id].addEventListener('input', update));
+
+        const ro = new ResizeObserver(() => update());
+        window.addEventListener('load', () => {
+            ro.observe(testCanvas.parentElement);
+            ro.observe(powerCanvas.parentElement);
+            update();
+        });
+        update();
+    </script>
+</body>
+</html>
