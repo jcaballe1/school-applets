@@ -14,6 +14,7 @@ A collection of interactive teaching tools for statistics and finance concepts.
 
 ### Finance
 - **Cash Flow Trap** - Learn why profitable businesses can still go bankrupt
+- **Break-Even Analysis Explorer** - Visualize where revenue meets total cost and explore the contribution margin
 
 ## Usage
 
