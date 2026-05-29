@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Break-Even Analysis Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2c5aa0;
+            --primary-dark: #1e3f73;
+            --ink: #2c3e50;
+            --muted: #6b7785;
+            --revenue: #1f9d8a;
+            --total-cost: #c0392b;
+            --fixed-cost: #8e9aa6;
+            --line: #e2e8f0;
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #eef1f5;
+            color: var(--ink);
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1320px;
+            background: white;
+            border: 1px solid #d9dee5;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 24px rgba(20, 40, 70, 0.08);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 12px 22px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 18px;
+            padding: 18px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ---- Chart column ---- */
+        .chart-panel {
+            background: #f7f9fc;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 16px 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .chart-panel h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ---- Side column ---- */
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+        }
+
+        .card {
+            background: #f7f9fc;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .card h2 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .control-group { margin-bottom: 13px; }
+        .control-group:last-child { margin-bottom: 0; }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.86rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .value-display {
+            font-weight: 700;
+            color: var(--ink);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.95rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            background: #d4dce6;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+            cursor: pointer;
+        }
+
+        /* ---- Results ---- */
+        .results-card {
+            background: linear-gradient(135deg, #eef4fb, #e3edf9);
+            border-color: #cfdcee;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .result-tile {
+            background: white;
+            border: 1px solid #dbe4f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .result-tile .label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 3px;
+        }
+        .result-tile .num {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+        .result-tile.warn .num { font-size: 0.95rem; color: var(--total-cost); }
+
+        /* ---- Concept / self-learning ---- */
+        .concept-card { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+
+        .concept-card h2 {
+            position: sticky;
+            top: 0;
+            background: #f7f9fc;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            z-index: 1;
+        }
+
+        .formula-box {
+            background: white;
+            border: 1px solid #dbe4f0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .interpretation {
+            font-size: 0.86rem;
+            line-height: 1.5;
+            color: #3d4856;
+        }
+        .interpretation strong { color: var(--primary-dark); }
+        .interpretation .live { color: var(--total-cost); font-weight: 700; }
+
+        details.steps {
+            margin-top: 10px;
+            border-top: 1px solid var(--line);
+            padding-top: 8px;
+        }
+        details.steps summary {
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary);
+            list-style: none;
+            user-select: none;
+        }
+        details.steps summary::-webkit-details-marker { display: none; }
+        details.steps summary::before { content: "\25B8\00A0"; color: var(--muted); }
+        details.steps[open] summary::before { content: "\25BE\00A0"; }
+
+        .step {
+            margin-top: 8px;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        .step .eq { margin-top: 3px; color: var(--ink); }
+
+        @media (max-width: 880px) {
+            body { align-items: flex-start; }
+            .main { grid-template-columns: 1fr; }
+            .chart-wrap { height: 320px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Break-Even Analysis Explorer</h1>
+            <p>Adjust the levers and watch where revenue overtakes cost.</p>
+        </div>
+
+        <div class="main">
+            <!-- Chart -->
+            <div class="chart-panel">
+                <h2>Revenue vs. Cost</h2>
+                <div class="chart-wrap">
+                    <canvas id="breakEvenChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Side column -->
+            <div class="side">
+                <!-- Controls -->
+                <div class="card">
+                    <h2>Inputs</h2>
+                    <div class="control-group">
+                        <label for="fixedCosts">Fixed Costs <span id="fixedCostsValue" class="value-display">&euro;10,000</span></label>
+                        <input type="range" id="fixedCosts" min="1000" max="50000" step="500" value="10000">
+                    </div>
+                    <div class="control-group">
+                        <label for="sellingPrice">Selling Price / unit <span id="sellingPriceValue" class="value-display">&euro;80</span></label>
+                        <input type="range" id="sellingPrice" min="10" max="250" step="5" value="80">
+                    </div>
+                    <div class="control-group">
+                        <label for="variableCost">Variable Cost / unit <span id="variableCostValue" class="value-display">&euro;30</span></label>
+                        <input type="range" id="variableCost" min="5" max="200" step="5" value="30">
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="card results-card">
+                    <h2>Break-Even Point</h2>
+                    <div class="results-grid">
+                        <div class="result-tile" id="unitsTile">
+                            <div class="label">Units</div>
+                            <div class="num" id="breakEvenUnits">200</div>
+                        </div>
+                        <div class="result-tile" id="revenueTile">
+                            <div class="label">Revenue</div>
+                            <div class="num" id="breakEvenRevenue">&euro;16,000</div>
+                        </div>
+                        <div class="result-tile">
+                            <div class="label">Contribution Margin / unit</div>
+                            <div class="num" id="contributionMargin">&euro;50</div>
+                        </div>
+                        <div class="result-tile">
+                            <div class="label">CM Ratio</div>
+                            <div class="num" id="cmRatio">62.5%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Concept -->
+                <div class="card concept-card">
+                    <h2>The Idea</h2>
+                    <div class="formula-box" id="formulaBox"></div>
+                    <p class="interpretation" id="interpretation"></p>
+
+                    <details class="steps">
+                        <summary>How the formula is derived</summary>
+                        <div class="step">1. Break-even is where profit is zero:<div class="eq" id="eq1"></div></div>
+                        <div class="step">2. Write each side in terms of quantity Q:<div class="eq" id="eq2"></div></div>
+                        <div class="step">3. Collect the Q terms and factor:<div class="eq" id="eq3"></div></div>
+                        <div class="step">4. Divide by the contribution margin:<div class="eq" id="eq4"></div></div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fixedCostsSlider = document.getElementById('fixedCosts');
+        const variableCostSlider = document.getElementById('variableCost');
+        const sellingPriceSlider = document.getElementById('sellingPrice');
+
+        const fixedCostsValue = document.getElementById('fixedCostsValue');
+        const variableCostValue = document.getElementById('variableCostValue');
+        const sellingPriceValue = document.getElementById('sellingPriceValue');
+
+        const breakEvenUnitsDisplay = document.getElementById('breakEvenUnits');
+        const breakEvenRevenueDisplay = document.getElementById('breakEvenRevenue');
+        const contributionMarginDisplay = document.getElementById('contributionMargin');
+        const cmRatioDisplay = document.getElementById('cmRatio');
+
+        const unitsTile = document.getElementById('unitsTile');
+        const revenueTile = document.getElementById('revenueTile');
+        const interpretation = document.getElementById('interpretation');
+
+        const euro = v => '\u20AC' + Math.round(v).toLocaleString('en-US');
+
+        // Render the static derivation steps with KaTeX once the library has loaded.
+        function renderStaticMath() {
+            if (!window.katex) return;
+            const opt = { throwOnError: false, displayMode: false };
+            katex.render('\\text{Total Revenue} = \\text{Total Cost}', document.getElementById('eq1'), opt);
+            katex.render('P \\cdot Q = FC + VC \\cdot Q', document.getElementById('eq2'), opt);
+            katex.render('Q\\,(P - VC) = FC', document.getElementById('eq3'), opt);
+            katex.render('Q^{*} = \\dfrac{FC}{\\,P - VC\\,}', document.getElementById('eq4'), opt);
+            katex.render('Q^{*} = \\dfrac{FC}{P - VC} = \\dfrac{\\text{Fixed Costs}}{\\text{Contribution Margin}}',
+                document.getElementById('formulaBox'), { throwOnError: false, displayMode: true });
+        }
+
+        const ctx = document.getElementById('breakEvenChart').getContext('2d');
+        const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+        const breakEvenChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Total Revenue',
+                        data: [],
+                        borderColor: css('--revenue'),
+                        backgroundColor: 'rgba(31, 157, 138, 0.06)',
+                        borderWidth: 2.5,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0
+                    },
+                    {
+                        label: 'Total Cost',
+                        data: [],
+                        borderColor: css('--total-cost'),
+                        backgroundColor: 'rgba(192, 57, 43, 0.06)',
+                        borderWidth: 2.5,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0
+                    },
+                    {
+                        label: 'Fixed Costs',
+                        data: [],
+                        borderColor: css('--fixed-cost'),
+                        borderWidth: 1.5,
+                        borderDash: [6, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 250 },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Units sold', color: '#6b7785' },
+                        min: 0,
+                        ticks: { maxTicksLimit: 8, callback: v => Number(v).toLocaleString('en-US') }
+                    },
+                    y: {
+                        title: { display: true, text: 'Euros (\u20AC)', color: '#6b7785' },
+                        beginAtZero: true,
+                        ticks: { callback: v => '\u20AC' + Number(v).toLocaleString('en-US') }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 14, usePointStyle: true, font: { size: 11 } } },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            title: items => 'Units: ' + Number(items[0].parsed.x).toLocaleString('en-US'),
+                            label: item => item.dataset.label + ': ' + euro(item.parsed.y)
+                        }
+                    }
+                },
+                interaction: { mode: 'index', intersect: false }
+            }
+        });
+
+        function updateChart() {
+            const fixedCosts = parseFloat(fixedCostsSlider.value);
+            const variableCost = parseFloat(variableCostSlider.value);
+            const sellingPrice = parseFloat(sellingPriceSlider.value);
+
+            fixedCostsValue.textContent = euro(fixedCosts);
+            variableCostValue.textContent = euro(variableCost);
+            sellingPriceValue.textContent = euro(sellingPrice);
+
+            const contributionMargin = sellingPrice - variableCost;
+            const cmRatio = sellingPrice > 0 ? contributionMargin / sellingPrice : 0;
+
+            contributionMarginDisplay.textContent = euro(contributionMargin);
+            cmRatioDisplay.textContent = (cmRatio * 100).toFixed(1) + '%';
+
+            let breakEvenUnits = 0;
+            let breakEvenRevenue = 0;
+            const profitable = contributionMargin > 0;
+
+            if (profitable) {
+                breakEvenUnits = fixedCosts / contributionMargin;
+                breakEvenRevenue = breakEvenUnits * sellingPrice;
+                breakEvenUnitsDisplay.textContent = Math.round(breakEvenUnits).toLocaleString('en-US');
+                breakEvenRevenueDisplay.textContent = euro(breakEvenRevenue);
+                unitsTile.classList.remove('warn');
+                revenueTile.classList.remove('warn');
+            } else {
+                breakEvenUnitsDisplay.textContent = 'Never';
+                breakEvenRevenueDisplay.textContent = '\u2014';
+                unitsTile.classList.add('warn');
+                revenueTile.classList.add('warn');
+            }
+
+            // X-axis range: show a bit beyond the break-even point (or a sensible default).
+            const maxUnits = profitable ? Math.max(20, Math.ceil(breakEvenUnits * 2)) : 200;
+
+            // Two endpoints are enough: revenue and cost are straight lines.
+            const revenueData = [
+                { x: 0, y: 0 },
+                { x: maxUnits, y: sellingPrice * maxUnits }
+            ];
+            const totalCostData = [
+                { x: 0, y: fixedCosts },
+                { x: maxUnits, y: fixedCosts + variableCost * maxUnits }
+            ];
+            const fixedCostData = [
+                { x: 0, y: fixedCosts },
+                { x: maxUnits, y: fixedCosts }
+            ];
+
+            breakEvenChart.data.datasets[0].data = revenueData;
+            breakEvenChart.data.datasets[1].data = totalCostData;
+            breakEvenChart.data.datasets[2].data = fixedCostData;
+            breakEvenChart.options.scales.x.max = maxUnits;
+
+            const annotations = {};
+            if (profitable) {
+                annotations.beLine = {
+                    type: 'line',
+                    xMin: breakEvenUnits, xMax: breakEvenUnits,
+                    yMin: 0, yMax: breakEvenRevenue,
+                    borderColor: '#2c5aa0',
+                    borderWidth: 1,
+                    borderDash: [4, 4]
+                };
+                annotations.bePoint = {
+                    type: 'point',
+                    xValue: breakEvenUnits,
+                    yValue: breakEvenRevenue,
+                    radius: 5,
+                    backgroundColor: '#2c5aa0',
+                    borderColor: 'white',
+                    borderWidth: 2
+                };
+                annotations.beLabel = {
+                    type: 'label',
+                    xValue: breakEvenUnits,
+                    yValue: breakEvenRevenue,
+                    content: ['Break-even', Math.round(breakEvenUnits).toLocaleString('en-US') + ' units'],
+                    color: '#1e3f73',
+                    font: { size: 11, weight: 'bold' },
+                    backgroundColor: 'rgba(255,255,255,0.85)',
+                    padding: 4,
+                    yAdjust: -26,
+                    xAdjust: breakEvenUnits > maxUnits * 0.7 ? -40 : 40
+                };
+            }
+            breakEvenChart.options.plugins.annotation = { annotations };
+
+            breakEvenChart.update();
+            updateInterpretation(fixedCosts, variableCost, sellingPrice, contributionMargin, breakEvenUnits, breakEvenRevenue, profitable);
+        }
+
+        function updateInterpretation(fc, vc, p, cm, beUnits, beRevenue, profitable) {
+            if (!profitable) {
+                interpretation.innerHTML =
+                    'The selling price (' + euro(p) + ') does not exceed the variable cost (' + euro(vc) +
+                    '), so every unit <span class="live">loses money</span>. The contribution margin is zero or negative and there is <strong>no break-even point</strong> &mdash; raise the price or cut the variable cost.';
+                return;
+            }
+            interpretation.innerHTML =
+                'Each unit contributes <strong>' + euro(cm) + '</strong> toward the ' + euro(fc) +
+                ' of fixed costs. You therefore need to sell <span class="live">' + Math.round(beUnits).toLocaleString('en-US') +
+                ' units</span> (' + euro(beRevenue) + ' in revenue) just to cover all costs. ' +
+                'Sell more and each extra unit adds ' + euro(cm) + ' of profit; sell fewer and you operate at a loss.';
+        }
+
+        fixedCostsSlider.addEventListener('input', updateChart);
+        variableCostSlider.addEventListener('input', updateChart);
+        sellingPriceSlider.addEventListener('input', updateChart);
+
+        // KaTeX is loaded with "defer", so wait for full page load before rendering.
+        window.addEventListener('load', renderStaticMath);
+        updateChart();
+    </script>
+</body>
+</html>
