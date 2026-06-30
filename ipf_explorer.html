@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iterative Proportional Fitting — Survey Reweighting Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.1rem;
+            margin-bottom: 5px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.05fr 1.15fr 1fr;
+            gap: 18px;
+            padding: 20px;
+        }
+
+        .panel {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .card-box {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .card-box h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .subtle {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        /* Tables */
+        .ipf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+            table-layout: fixed;
+        }
+
+        .ipf-table th, .ipf-table td {
+            border: 1px solid #d4dae3;
+            padding: 4px;
+            text-align: center;
+            font-size: 0.78rem;
+        }
+
+        .ipf-table th {
+            background-color: #2c5aa0;
+            color: white;
+            font-weight: bold;
+        }
+
+        .corner {
+            background-color: #1e3f73 !important;
+        }
+
+        .rowhead {
+            background-color: #3d6cb0;
+            color: white;
+            font-weight: bold;
+        }
+
+        .data-input {
+            width: 100%;
+            max-width: 60px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 0.78rem;
+        }
+
+        .target-input {
+            width: 100%;
+            max-width: 60px;
+            padding: 3px;
+            border: 1px solid #f0a500;
+            background: #fff8e6;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: bold;
+        }
+
+        .target-cell {
+            background-color: #fff3d6;
+            font-weight: bold;
+            color: #8a6300;
+        }
+
+        .total-cell {
+            background-color: #e8f4f8;
+            font-weight: bold;
+        }
+
+        /* Live working grid value cells get a blue heat tint via inline style */
+        .val-cell { transition: background-color 0.4s ease; }
+
+        .factor-cell {
+            font-size: 0.72rem;
+            font-weight: bold;
+            color: #2c5aa0;
+            background: #eef4ff;
+        }
+
+        .active-dim {
+            outline: 3px solid #f0a500;
+            outline-offset: -3px;
+        }
+
+        .err-ok { color: #16a34a; font-weight: bold; }
+        .err-warn { color: #d97706; font-weight: bold; }
+        .err-bad { color: #dc2626; font-weight: bold; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            flex: 1 1 auto;
+            min-width: 90px;
+            padding: 9px 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary { background: #2c5aa0; color: white; }
+        .btn-primary:hover { background: #1e3f73; }
+        .btn-run { background: #16a34a; color: white; }
+        .btn-run:hover { background: #0f7a35; }
+        .btn-reset { background: #e0e6ed; color: #2c3e50; }
+        .btn-reset:hover { background: #cdd6e0; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-display {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-display h3 { font-size: 1rem; margin-bottom: 8px; }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.85rem;
+        }
+        .status-item:last-child { border-bottom: none; }
+        .status-value { font-weight: bold; }
+
+        .op-banner {
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            background: #fff3d6;
+            color: #8a6300;
+            border: 1px solid #f0a500;
+        }
+        .op-banner.row-op { background: #e6f0ff; color: #1e3f73; border-color: #2c5aa0; }
+        .op-banner.col-op { background: #e9f9ee; color: #0f7a35; border-color: #16a34a; }
+        .op-banner.done-op { background: #dcfce7; color: #16a34a; border-color: #16a34a; }
+
+        .plot-container {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+        .plot-title {
+            text-align: center;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        canvas { display: block; margin: 0 auto; max-width: 100%; }
+
+        .formula-display {
+            background-color: #f8f9ff;
+            border-left: 4px solid #4facfe;
+            padding: 10px;
+            margin-top: 6px;
+            border-radius: 0 8px 8px 0;
+        }
+        .formula { text-align: center; margin: 6px 0; }
+
+        .scenario-btn {
+            width: 100%;
+            padding: 7px 9px;
+            border: 2px solid #e0e6ed;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            text-align: left;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+        }
+        .scenario-btn:hover { border-color: #4facfe; background-color: #f8f9ff; }
+        .scenario-btn strong { color: #2c3e50; }
+
+        .story {
+            font-size: 0.82rem;
+            color: #34404d;
+            line-height: 1.5;
+        }
+        .story p { margin-bottom: 8px; }
+        .story .tag {
+            display: inline-block;
+            background: #eef4ff;
+            color: #2c5aa0;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: #2c5aa0;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+        details[open] summary { margin-bottom: 8px; }
+
+        .warn-box {
+            background: #fcf8e3;
+            color: #8a6d3b;
+            border: 1px solid #f0d99b;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 0.72rem;
+            color: #555;
+            margin-top: 4px;
+        }
+        .legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; display: inline-block; }
+
+        @media (max-width: 1000px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+
+        /* ---- overrides for clean aesthetics ---- */
+        .warn-box {
+            background: #fde8e8;
+            color: #b91c1c;
+            border: 1px solid #dc2626;
+        }
+
+        .op-banner.warn-op { background: #fde8e8; color: #b91c1c; border-color: #dc2626; }
+
+        details summary {
+            list-style: none;
+        }
+        details summary::before {
+            content: '+ ';
+        }
+        details[open] summary::before { content: '- '; }
+
+        .scenario-btn strong {
+            display: block;
+        }
+
+        .scenario-btn {
+            font-size: 0.8rem;
+            line-height: 1.35;
+            padding: 7px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Iterative Proportional Fitting &mdash; Survey Reweighting Explorer</h1>
+            <p>Correct a biased sample to match known population totals, one half-step at a time</p>
+        </div>
+
+        <div class="main-content">
+
+            <!-- ============ LEFT: SETUP ============ -->
+            <div class="panel">
+                <div class="card-box">
+                    <h3>The Problem: A Skewed Survey</h3>
+                    <div class="story">
+                        <p>The student council ran a satisfaction survey at your school. You collected
+                        <strong>225 responses</strong>, split by study programme and year group
+                        (the blue table: Raw survey counts). The problem: Business &amp; Management
+                        students are <strong>over-represented</strong> and IT &amp; Technology students
+                        are <strong>under-represented</strong>.</p>
+                        <p>The administration provides the true enrolment numbers (the
+                        <span style="color:#7a5500;font-weight:bold;">orange margins</span>):
+                        how many students actually study each programme, and how many per year group.
+                        These are your <strong>targets</strong>.</p>
+                        <p>IPF reweights the cells so both sets of totals match the real population,
+                        while keeping the internal pattern of responses intact. The result gives
+                        correctly weighted counts for computing representative averages.</p>
+                    </div>
+                </div>
+
+                <div class="card-box">
+                    <h3>Survey Counts &amp; True Enrolment</h3>
+                    <table class="ipf-table" id="setup-table">
+                        <tr>
+                            <th class="corner"></th>
+                            <th>Year 1</th>
+                            <th>Year 2</th>
+                            <th>Year 3</th>
+                            <th class="target-cell">Enrolment<br>per programme</th>
+                        </tr>
+                        <tr>
+                            <th class="rowhead">Business</th>
+                            <td><input type="number" class="data-input" id="b-0-0" value="80" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-0-1" value="40" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-0-2" value="20" min="0"></td>
+                            <td><input type="number" class="target-input" id="tr-0" value="450" min="0"></td>
+                        </tr>
+                        <tr>
+                            <th class="rowhead">IT &amp; Tech</th>
+                            <td><input type="number" class="data-input" id="b-1-0" value="20" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-1-1" value="15" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-1-2" value="8" min="0"></td>
+                            <td><input type="number" class="target-input" id="tr-1" value="300" min="0"></td>
+                        </tr>
+                        <tr>
+                            <th class="rowhead">Health &amp; Care</th>
+                            <td><input type="number" class="data-input" id="b-2-0" value="20" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-2-1" value="12" min="0"></td>
+                            <td><input type="number" class="data-input" id="b-2-2" value="10" min="0"></td>
+                            <td><input type="number" class="target-input" id="tr-2" value="250" min="0"></td>
+                        </tr>
+                        <tr>
+                            <th class="target-cell">Enrolment<br>per year</th>
+                            <td><input type="number" class="target-input" id="tc-0" value="400" min="0"></td>
+                            <td><input type="number" class="target-input" id="tc-1" value="380" min="0"></td>
+                            <td><input type="number" class="target-input" id="tc-2" value="220" min="0"></td>
+                            <td class="total-cell" id="grand-check">—</td>
+                        </tr>
+                    </table>
+                    <div class="legend">
+                        <span><span class="swatch" style="background:#cfe0f5;"></span>raw survey counts (editable)</span>
+                        <span><span class="swatch" style="background:#fff3d6;"></span>true enrolment targets</span>
+                    </div>
+                    <p class="subtle" style="margin-top:6px;">
+                        The corner cell checks whether programme totals and year-group totals agree.
+                        IPF only converges fully when both target sums are equal.
+                    </p>
+                </div>
+
+                <div class="card-box">
+                    <h3>Example Scenarios</h3>
+                    <button class="scenario-btn" data-scenario="biased">
+                        <strong>Biased Sample (default)</strong>
+                        Business and Year 1 are over-sampled relative to true enrolment.
+                    </button>
+                    <button class="scenario-btn" data-scenario="bigyr1">
+                        <strong>Large Year 1 Intake</strong>
+                        A surge in new students: Year 1 is now much larger than other years.
+                    </button>
+                    <button class="scenario-btn" data-scenario="balanced">
+                        <strong>Already Proportional</strong>
+                        Sample proportions already match enrolment &mdash; scaling factors stay near 1.
+                    </button>
+                    <button class="scenario-btn" data-scenario="inconsistent">
+                        <strong>Inconsistent Targets</strong>
+                        Programme and year-group totals do not agree &mdash; never fully settles.
+                    </button>
+                </div>
+            </div>
+            <!-- ============ MIDDLE: LIVE ALGORITHM ============ -->
+            <div class="panel">
+                <div class="controls">
+                    <button class="btn btn-primary" id="step-btn">Step &#9654;</button>
+                    <button class="btn btn-run"     id="run-btn" >Run to Convergence</button>
+                    <button class="btn btn-reset"   id="reset-btn">Reset &#8635;</button>
+                </div>
+
+                <div class="op-banner" id="op-banner">
+                    Press <strong>Step</strong> to begin. The first half-step scales every programme
+                    row so its total matches the true enrolment for that programme.
+                </div>
+
+                <div class="warn-box" id="warn-box"></div>
+
+                <div class="card-box">
+                    <h3>Reweighted Grid &mdash; live</h3>
+                    <div id="live-grid"></div>
+                    <div class="legend" style="margin-top:8px;">
+                        <span><span class="swatch" style="background:#eef4ff;"></span>scaling factor shown</span>
+                        <span><span class="swatch" style="background:#dff3e3;"></span>total on target</span>
+                        <span><span class="swatch" style="background:#fde2e2;"></span>total off target</span>
+                    </div>
+                </div>
+
+                <div class="plot-container">
+                    <div class="plot-title">Convergence &mdash; largest relative margin error per step</div>
+                    <canvas id="convChart" width="380" height="170"></canvas>
+                </div>
+
+                <div class="formula-display">
+                    <div class="formula"><strong>Row step</strong> &mdash; scale row <span id="f-u"></span> to match programme target:</div>
+                    <div class="formula" id="formula-row"></div>
+                    <div class="formula" style="margin-top:8px;"><strong>Column step</strong> &mdash; scale column <span id="f-v"></span> to match year-group target:</div>
+                    <div class="formula" id="formula-col"></div>
+                    <p class="subtle" style="margin-top:8px;">
+                        Each step multiplies an entire row (or column) by one factor.
+                        Internal ratios are preserved &mdash; only the margin totals are adjusted.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ============ RIGHT: STATUS ============ -->
+            <div class="panel">
+                <div class="status-display">
+                    <h3>Algorithm Status</h3>
+                    <div class="status-item">
+                        <span>Step:</span>
+                        <span class="status-value" id="st-step">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Last operation:</span>
+                        <span class="status-value" id="st-op">none</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Largest margin error:</span>
+                        <span class="status-value" id="st-err">&mdash;</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Converged?</span>
+                        <span class="status-value" id="st-conv">No</span>
+                    </div>
+                </div>
+
+                <div class="card-box">
+                    <h3>Margins: current vs. target</h3>
+                    <p class="subtle" style="margin-bottom:6px;">
+                        Rows = programmes &nbsp;|&nbsp; Columns = year groups
+                    </p>
+                    <div id="margin-tables"></div>
+                </div>
+
+                <div class="card-box">
+                    <h3>What just happened?</h3>
+                    <div class="story" id="explain-step">
+                        Press <strong>Step</strong> to scale each programme row so it hits its true
+                        enrolment total. Then watch how that slightly shifts the year-group column
+                        totals, and how the next step corrects them &mdash; back and forth until the
+                        adjustments become negligible.
+                    </div>
+                </div>
+
+                <div class="card-box">
+                    <details>
+                        <summary>What is IPF, in one minute?</summary>
+                        <div class="story">
+                            <p>You have a table with known internal values but the row and column totals
+                            no longer match the targets you care about. IPF fixes this by alternating
+                            two simple operations:</p>
+                            <p><strong>1.</strong> Scale every row so row totals hit their targets.<br>
+                            <strong>2.</strong> That shifts column totals &mdash; so scale every column.<br>
+                            <strong>3.</strong> That slightly shifts row totals &mdash; repeat from 1.</p>
+                            <p>Each round the corrections shrink. Within a handful of steps the table
+                            <em>converges</em>: all edges match, and the internal proportions stay as
+                            close to the original as mathematics allows.</p>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="card-box">
+                    <details>
+                        <summary>Where does IPF come from?</summary>
+                        <div class="story">
+                            <p>Invented by <span class="tag">Deming &amp; Stephan (1940)</span> to adjust
+                            sampled frequency tables to known marginal totals. The same idea was
+                            independently re-discovered in several fields under different names:</p>
+                            <p>
+                            <span class="tag">Raking</span> in survey research &mdash; reweight poll
+                            results to match age, gender, and region profiles of the population.<br><br>
+                            <span class="tag">RAS method</span> in economics &mdash; update
+                            input&ndash;output tables when only new sector totals are known.<br><br>
+                            <span class="tag">Fratar method (1954)</span> in transport planning &mdash;
+                            forecast future traffic flows between city zones from current trip patterns.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ---------- labels ----------
+        const PROGS = ["Business", "IT & Tech", "Health & Care"];
+        const YEARS = ["Year 1", "Year 2", "Year 3"];
+        const TOL      = 0.001;
+        const MAX_ITER = 60;
+
+        // ---------- state ----------
+        let M = [];
+        let baseline   = [];
+        let targetRows = [];
+        let targetCols = [];
+        let stepCount  = 0;
+        let nextOp     = 'row';
+        let lastOp     = 'none';
+        let converged  = false;
+        let lastFactors   = null;
+        let errorHistory  = [];
+
+        // ---------- helpers ----------
+        function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+        function rowSum(m, i) { return m[i].reduce((a, b) => a + b, 0); }
+        function colSum(m, j) { return m.reduce((a, r) => a + r[j], 0); }
+        function clone(m)     { return m.map(r => r.slice()); }
+
+        function readSetup() {
+            baseline = [];
+            for (let i = 0; i < 3; i++) {
+                const row = [];
+                for (let j = 0; j < 3; j++) row.push(num(`b-${i}-${j}`));
+                baseline.push(row);
+            }
+            targetRows = [num('tr-0'), num('tr-1'), num('tr-2')];
+            targetCols = [num('tc-0'), num('tc-1'), num('tc-2')];
+        }
+
+        function maxRelError() {
+            let e = 0;
+            for (let i = 0; i < 3; i++) {
+                const t = targetRows[i];
+                if (t > 0) e = Math.max(e, Math.abs(rowSum(M, i) - t) / t);
+            }
+            for (let j = 0; j < 3; j++) {
+                const t = targetCols[j];
+                if (t > 0) e = Math.max(e, Math.abs(colSum(M, j) - t) / t);
+            }
+            return e;
+        }
+
+        // ---------- core ----------
+        function reset() {
+            readSetup();
+            M         = clone(baseline);
+            stepCount = 0;
+            nextOp    = 'row';
+            lastOp    = 'none';
+            converged = false;
+            lastFactors  = null;
+            errorHistory = [{ step: 0, err: maxRelError() }];
+
+            const ob = document.getElementById('op-banner');
+            ob.className = 'op-banner';
+            ob.innerHTML = 'Press <strong>Step</strong> to begin. The first half-step scales every ' +
+                'programme row so its total matches the true enrolment for that programme.';
+
+            document.getElementById('explain-step').innerHTML =
+                'Press <strong>Step</strong> to scale each programme row so it hits its true enrolment ' +
+                'total. Then watch how that slightly shifts the year-group column totals, and how the ' +
+                'next step corrects them \u2014 back and forth until the adjustments become negligible.';
+
+            render();
+        }
+
+        function doStep() {
+            if (converged) return;
+            const factors = [];
+
+            if (nextOp === 'row') {
+                for (let i = 0; i < 3; i++) {
+                    const s = rowSum(M, i);
+                    const f = s > 0 ? targetRows[i] / s : 1;
+                    factors.push(f);
+                    for (let j = 0; j < 3; j++) M[i][j] *= f;
+                }
+                lastOp      = 'row';
+                lastFactors = { dim: 'row', factors };
+                nextOp      = 'col';
+            } else {
+                for (let j = 0; j < 3; j++) {
+                    const s = colSum(M, j);
+                    const f = s > 0 ? targetCols[j] / s : 1;
+                    factors.push(f);
+                    for (let i = 0; i < 3; i++) M[i][j] *= f;
+                }
+                lastOp      = 'col';
+                lastFactors = { dim: 'col', factors };
+                nextOp      = 'row';
+            }
+
+            stepCount++;
+            const err = maxRelError();
+            errorHistory.push({ step: stepCount, err });
+            if (err < TOL) converged = true;
+            updateBanners(err);
+            render();
+        }
+
+        function runToConvergence() {
+            let guard = 0;
+            while (!converged && guard < MAX_ITER) { doStep(); guard++; }
+            if (!converged) {
+                const ob = document.getElementById('op-banner');
+                ob.className = 'op-banner warn-op';
+                ob.innerHTML = 'Did not settle within ' + MAX_ITER + ' steps. This usually means ' +
+                    'the two sets of targets are inconsistent \u2014 their totals do not agree.';
+            }
+        }
+
+        function updateBanners(err) {
+            const ob = document.getElementById('op-banner');
+            const ex = document.getElementById('explain-step');
+
+            const facTxt = (labels, arr) =>
+                arr.map((f, k) => labels[k] + ' \u00d7' + f.toFixed(3)).join(', ');
+
+            if (converged) {
+                ob.className = 'op-banner done-op';
+                ob.innerHTML = 'Converged. All programme and year-group totals now match the true enrolment.';
+                ex.innerHTML = 'The corrections shrank below the tolerance threshold (' + (TOL * 100) + '%). ' +
+                    'The reweighted table now represents the actual student population: all margins match, ' +
+                    'and the internal response pattern stays as close as possible to the original survey.';
+                return;
+            }
+
+            if (lastOp === 'row') {
+                ob.className = 'op-banner row-op';
+                ob.innerHTML = 'Row step complete. Programme totals now match. ' +
+                    'The year-group columns have shifted slightly \u2014 the next step corrects them.';
+                ex.innerHTML =
+                    'Each programme row was multiplied by one factor to hit its enrolment target:<br>' +
+                    '<strong>' + facTxt(PROGS, lastFactors.factors) + '</strong>.<br><br>' +
+                    'Business was scaled <strong>down</strong> (it was over-represented in the raw survey); ' +
+                    'IT &amp; Tech and Health were scaled <strong>up</strong>. ' +
+                    'But stretching the rows shifts the year-group column totals off target \u2014 ' +
+                    'the next column step corrects that.';
+            } else {
+                ob.className = 'op-banner col-op';
+                ob.innerHTML = 'Column step complete. Year-group totals now match. ' +
+                    'The programme rows have shifted slightly \u2014 the next step corrects them.';
+                ex.innerHTML =
+                    'Each year-group column was multiplied by one factor to hit its enrolment target:<br>' +
+                    '<strong>' + facTxt(YEARS, lastFactors.factors) + '</strong>.<br><br>' +
+                    'Fixing the columns nudges the programme row totals again \u2014 but only by a small ' +
+                    'amount. Each round the drift gets smaller and smaller until it is negligible.';
+            }
+        }
+
+        // ---------- rendering ----------
+        function heatColor(v, maxv) {
+            if (maxv <= 0) return '#ffffff';
+            const t = Math.min(1, v / maxv);
+            const r = Math.round(255 - t * (255 - 44));
+            const g = Math.round(255 - t * (255 - 90));
+            const b = Math.round(255 - t * (255 - 160));
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function render() {
+            renderGrandCheck();
+            renderLiveGrid();
+            renderMarginTables();
+            renderStatus();
+            renderChart();
+            document.getElementById('step-btn').disabled = converged;
+            document.getElementById('run-btn').disabled  = converged;
+        }
+
+        function renderGrandCheck() {
+            readSetup();
+            const sr = targetRows.reduce((a, b) => a + b, 0);
+            const sc = targetCols.reduce((a, b) => a + b, 0);
+            const el = document.getElementById('grand-check');
+            const wb = document.getElementById('warn-box');
+            if (Math.abs(sr - sc) < 1e-9) {
+                el.textContent = sr.toFixed(0);
+                el.style.color  = '#16a34a';
+                wb.style.display = 'none';
+            } else {
+                el.innerHTML    = sr + ' \u2260 ' + sc;
+                el.style.color  = '#dc2626';
+                wb.style.display = 'block';
+                wb.innerHTML = '<strong>Inconsistent targets:</strong> programme totals sum to ' + sr +
+                    ' but year-group totals sum to ' + sc +
+                    '. IPF will keep bouncing and never fully settle \u2014 ' +
+                    'fix the targets so both sums are equal.';
+            }
+        }
+
+        function renderLiveGrid() {
+            let maxv = 0;
+            for (let i = 0; i < 3; i++)
+                for (let j = 0; j < 3; j++) maxv = Math.max(maxv, M[i][j]);
+
+            let html = '<table class="ipf-table"><tr><th class="corner"></th>';
+            for (let j = 0; j < 3; j++) html += `<th>${YEARS[j]}</th>`;
+            html += '<th class="target-cell" style="font-size:0.72rem;">Row<br>now / target</th></tr>';
+
+            for (let i = 0; i < 3; i++) {
+                const rs = rowSum(M, i);
+                const ok = targetRows[i] > 0 && Math.abs(rs - targetRows[i]) / targetRows[i] < TOL;
+                html += `<tr><th class="rowhead">${PROGS[i]}</th>`;
+                for (let j = 0; j < 3; j++) {
+                    const fg = M[i][j] > maxv * 0.55 ? '#fff' : '#222';
+                    html += `<td class="val-cell" style="background:${heatColor(M[i][j], maxv)};color:${fg};">${M[i][j].toFixed(1)}</td>`;
+                }
+                const ms = ok ? 'background:#dff3e3;' : 'background:#fde2e2;';
+                html += `<td style="${ms}font-size:0.72rem;">${rs.toFixed(0)} / ${targetRows[i]}</td></tr>`;
+            }
+
+            html += '<tr><th class="target-cell" style="font-size:0.72rem;">Col<br>now / target</th>';
+            for (let j = 0; j < 3; j++) {
+                const cs = colSum(M, j);
+                const ok = targetCols[j] > 0 && Math.abs(cs - targetCols[j]) / targetCols[j] < TOL;
+                const ms = ok ? 'background:#dff3e3;' : 'background:#fde2e2;';
+                html += `<td style="${ms}font-size:0.72rem;">${cs.toFixed(0)} / ${targetCols[j]}</td>`;
+            }
+            const grand = M.reduce((a, r) => a + r.reduce((x, y) => x + y, 0), 0);
+            html += `<td class="total-cell" style="font-size:0.72rem;">${grand.toFixed(0)}</td></tr>`;
+
+            if (lastFactors) {
+                if (lastFactors.dim === 'row') {
+                    html += '<tr><th class="factor-cell">row factor</th>';
+                    html += `<td class="factor-cell" colspan="3" style="text-align:left;font-size:0.72rem;">${lastFactors.factors.map((f, i) => PROGS[i].split(' ')[0] + ':\u00d7' + f.toFixed(3)).join(' &nbsp; ')}</td>`;
+                    html += '<td class="factor-cell"></td></tr>';
+                } else {
+                    html += '<tr><th class="factor-cell">col factor</th>';
+                    for (let j = 0; j < 3; j++)
+                        html += `<td class="factor-cell">\u00d7${lastFactors.factors[j].toFixed(3)}</td>`;
+                    html += '<td class="factor-cell"></td></tr>';
+                }
+            }
+
+            html += '</table>';
+            document.getElementById('live-grid').innerHTML = html;
+        }
+
+        function renderMarginTables() {
+            let html = '<table class="ipf-table" style="margin-bottom:10px;">';
+            html += '<tr><th class="corner">Programme</th><th>Now</th><th class="target-cell">Target</th><th>Error</th></tr>';
+            for (let i = 0; i < 3; i++) {
+                const rs = rowSum(M, i);
+                const e  = targetRows[i] > 0 ? Math.abs(rs - targetRows[i]) / targetRows[i] : 0;
+                html += `<tr><th class="rowhead">${PROGS[i]}</th><td>${rs.toFixed(0)}</td>` +
+                    `<td class="target-cell">${targetRows[i]}</td>` +
+                    `<td class="${errClass(e)}">${(e * 100).toFixed(1)}%</td></tr>`;
+            }
+            html += '</table><table class="ipf-table">';
+            html += '<tr><th class="corner">Year group</th><th>Now</th><th class="target-cell">Target</th><th>Error</th></tr>';
+            for (let j = 0; j < 3; j++) {
+                const cs = colSum(M, j);
+                const e  = targetCols[j] > 0 ? Math.abs(cs - targetCols[j]) / targetCols[j] : 0;
+                html += `<tr><th class="rowhead">${YEARS[j]}</th><td>${cs.toFixed(0)}</td>` +
+                    `<td class="target-cell">${targetCols[j]}</td>` +
+                    `<td class="${errClass(e)}">${(e * 100).toFixed(1)}%</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('margin-tables').innerHTML = html;
+        }
+
+        function errClass(e) {
+            if (e < TOL)  return 'err-ok';
+            if (e < 0.05) return 'err-warn';
+            return 'err-bad';
+        }
+
+        function renderStatus() {
+            document.getElementById('st-step').textContent = stepCount;
+            const opLabels = {
+                row:  'Row (programme) scaling',
+                col:  'Column (year-group) scaling',
+                none: 'none'
+            };
+            document.getElementById('st-op').textContent = opLabels[lastOp];
+            const err = errorHistory.length ? errorHistory[errorHistory.length - 1].err : maxRelError();
+            document.getElementById('st-err').textContent = (err * 100).toFixed(2) + '%';
+            document.getElementById('st-conv').textContent = converged ? 'Yes' : 'No';
+        }
+
+        function renderChart() {
+            const cv  = document.getElementById('convChart');
+            const ctx = cv.getContext('2d');
+            const W = cv.width, H = cv.height;
+            ctx.clearRect(0, 0, W, H);
+
+            const padL = 42, padR = 12, padT = 12, padB = 26;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+
+            ctx.strokeStyle = '#cbd3dd'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH);
+            ctx.stroke();
+
+            const maxErr = Math.max(0.001, ...errorHistory.map(p => p.err));
+            const n      = errorHistory.length;
+            const xStep  = n > 1 ? plotW / (n - 1) : plotW;
+
+            ctx.fillStyle = '#888'; ctx.font = '9px Arial'; ctx.textAlign = 'right';
+            for (let k = 0; k <= 4; k++) {
+                const yy  = padT + plotH - (k / 4) * plotH;
+                const val = (maxErr * k / 4) * 100;
+                ctx.fillText(val.toFixed(0) + '%', padL - 4, yy + 3);
+                ctx.strokeStyle = '#eef1f5'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(padL + plotW, yy); ctx.stroke();
+            }
+            ctx.textAlign = 'center'; ctx.fillStyle = '#888';
+            ctx.fillText('step', padL + plotW / 2, H - 6);
+
+            ctx.font = '8px Arial';
+            errorHistory.forEach((p, idx) => {
+                if (idx % Math.ceil(n / 10) === 0 || idx === n - 1) {
+                    ctx.fillText(p.step, padL + idx * xStep, padT + plotH + 14);
+                }
+            });
+
+            ctx.strokeStyle = '#2c5aa0'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            errorHistory.forEach((p, idx) => {
+                const x = padL + idx * xStep;
+                const y = padT + plotH - (p.err / maxErr) * plotH;
+                idx === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            errorHistory.forEach((p, idx) => {
+                const x = padL + idx * xStep;
+                const y = padT + plotH - (p.err / maxErr) * plotH;
+                ctx.fillStyle = p.err < TOL ? '#16a34a' : '#2c5aa0';
+                ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fill();
+            });
+        }
+
+        // ---------- scenarios ----------
+        const BASE = [[80, 40, 20], [20, 15, 8], [20, 12, 10]];
+
+        const SCENARIOS = {
+            biased: {
+                base: BASE,
+                tr: [450, 300, 250], tc: [400, 380, 220]   // both sum to 1000
+            },
+            bigyr1: {
+                base: BASE,
+                tr: [450, 300, 250], tc: [600, 280, 120]   // both sum to 1000; Year 1 surges
+            },
+            balanced: {
+                // targets proportional to baseline row/col sums (140,43,42 / 120,67,38) → scaled to 1000
+                base: BASE,
+                tr: [622, 191, 187], tc: [533, 298, 169]   // both sum to 1000
+            },
+            inconsistent: {
+                base: BASE,
+                tr: [450, 300, 250], tc: [500, 380, 220]   // 1000 vs 1100
+            }
+        };
+
+        function applyScenario(name) {
+            const s = SCENARIOS[name];
+            for (let i = 0; i < 3; i++)
+                for (let j = 0; j < 3; j++)
+                    document.getElementById(`b-${i}-${j}`).value = s.base[i][j];
+            s.tr.forEach((v, i) => document.getElementById(`tr-${i}`).value = v);
+            s.tc.forEach((v, j) => document.getElementById(`tc-${j}`).value = v);
+            reset();
+        }
+
+        // ---------- KaTeX formulas ----------
+        function renderFormulas() {
+            if (!window.katex) return;
+            try {
+                katex.render("u_i", document.getElementById('f-u'));
+                katex.render("v_j", document.getElementById('f-v'));
+                katex.render(
+                    "m_{ij} \\;\\leftarrow\\; m_{ij}\\cdot\\dfrac{u_i}{\\displaystyle\\sum_j m_{ij}}",
+                    document.getElementById('formula-row'));
+                katex.render(
+                    "m_{ij} \\;\\leftarrow\\; m_{ij}\\cdot\\dfrac{v_j}{\\displaystyle\\sum_i m_{ij}}",
+                    document.getElementById('formula-col'));
+            } catch(e) { /* KaTeX not yet ready */ }
+        }
+
+        // ---------- wiring ----------
+        document.getElementById('step-btn').addEventListener('click', doStep);
+        document.getElementById('run-btn').addEventListener('click', runToConvergence);
+        document.getElementById('reset-btn').addEventListener('click', reset);
+
+        document.querySelectorAll('.scenario-btn').forEach(btn =>
+            btn.addEventListener('click', () => applyScenario(btn.dataset.scenario)));
+
+        document.querySelectorAll('.data-input, .target-input').forEach(inp =>
+            inp.addEventListener('input', reset));
+
+        window.addEventListener('load', () => { renderFormulas(); reset(); });
+        setTimeout(renderFormulas, 400);
+    </script>
+</body>
+</html>

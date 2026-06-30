@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Mining Explorer: Weibull End of Life Forecasting</title>
+
+    <!-- KaTeX for rendering the mathematical formulas (so students can read the math cleanly) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+    <!-- Chart.js for the dual-axis lifecycle chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ------------------------------------------------------------------ */
+        /*  Design tokens                                                      */
+        /*  Colour palette inspired by Dutch government (Rijksoverheid)        */
+        /*  dashboards: deep Rijksoverheid blue, clean white, subtle orange.   */
+        /* ------------------------------------------------------------------ */
+        :root {
+            --color-rijksblue: #154273;       /* Rijksoverheid primary blue   */
+            --color-rijksblue-dark: #0b3259;
+            --color-accent: #007bc7;          /* Rijksoverheid link/accent    */
+            --color-accent-light: #e5f0f8;
+            --color-orange: #e17000;          /* Rijksoverheid orange accent  */
+            --color-orange-light: #fbe9d6;
+            --color-red: #d52b1e;
+            --color-background: #f3f4f6;
+            --color-surface: #ffffff;
+            --color-border: #dde1e6;
+            --color-text: #1c1c1c;
+            --color-text-secondary: #5b6770;
+
+            --spacing-xs: 0.4rem;
+            --spacing-sm: 0.6rem;
+            --spacing-md: 0.9rem;
+            --spacing-lg: 1.3rem;
+            --border-radius: 8px;
+            --transition: all 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.45;
+            padding: 4px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ----------------------------- Header ----------------------------- */
+        .header {
+            background-color: var(--color-rijksblue);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-bottom: 4px solid var(--color-orange);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-md);
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header .subtitle { font-size: 0.88rem; opacity: 0.9; font-weight: 400; }
+
+        .reset-btn {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .reset-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ----------------------- Intro / context banner ------------------- */
+        .intro {
+            padding: var(--spacing-xs) var(--spacing-lg) var(--spacing-sm);
+            background: var(--color-accent-light);
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: var(--color-text);
+        }
+        .intro strong { color: var(--color-rijksblue); }
+
+        /* ----------------------- Main layout grid ------------------------- */
+        /* Three columns: controls | dashboard | methodology.                 */
+        /* This spreads content across the wide screen so it fits on one page.*/
+        .main-content {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr) 330px;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-md);
+            align-items: stretch;
+        }
+
+        .column { display: flex; flex-direction: column; gap: var(--spacing-md); min-width: 0; }
+
+        .panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .panel-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-rijksblue);
+            margin-bottom: var(--spacing-sm);
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 2px solid var(--color-accent-light);
+        }
+
+        .control-group { margin-bottom: var(--spacing-md); }
+        .control-group:last-child { margin-bottom: 0; }
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .control-value {
+            color: var(--color-orange);
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+        .control-hint {
+            font-size: 0.74rem;
+            color: var(--color-text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        /* Range sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-border);
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]:focus { box-shadow: 0 0 0 3px var(--color-accent-light); }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--color-rijksblue);
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { background: var(--color-accent); transform: scale(1.12); }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--color-rijksblue);
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        /* Dropdown */
+        select {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            cursor: pointer;
+        }
+        select:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-light); }
+
+        /* Parameter readout box */
+        .param-box { background: var(--color-accent-light); border-radius: 6px; padding: var(--spacing-sm); font-size: 0.82rem; }
+        .param-box .row { display: flex; justify-content: space-between; padding: 0.12rem 0; }
+        .param-box .row span:last-child {
+            font-weight: 700;
+            color: var(--color-rijksblue);
+            font-variant-numeric: tabular-nums;
+        }
+        .param-box .row.peak span:last-child { color: var(--color-orange); }
+
+        /* KPI cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
+        }
+        .kpi-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-left: 5px solid var(--color-rijksblue);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .kpi-card.accent-orange { border-left-color: var(--color-orange); }
+        .kpi-card.accent-blue { border-left-color: var(--color-accent); }
+        .kpi-label {
+            font-size: 0.78rem;
+            color: var(--color-text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            min-height: 2em;
+        }
+        .kpi-value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--color-text);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+        }
+        .kpi-value.orange { color: var(--color-orange); }
+        .kpi-value.blue { color: var(--color-rijksblue); }
+        .kpi-sub { font-size: 0.74rem; color: var(--color-text-secondary); margin-top: 0.2rem; }
+
+        /* Chart */
+        .chart-panel { flex: 1; display: flex; flex-direction: column; }
+        .chart-title { font-size: 1rem; font-weight: 700; color: var(--color-rijksblue); margin-bottom: 0.15rem; }
+        .chart-subtitle { font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: var(--spacing-sm); }
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 260px;
+        }
+
+        /* Methodology column */
+        .math-panel { font-size: 0.8rem; line-height: 1.35; display: flex; flex-direction: column; min-height: 0; }
+        .math-body { margin-top: var(--spacing-xs); overflow-y: auto; flex: 1; }
+        .math-body .formula {
+            background: var(--color-accent-light);
+            border-left: 4px solid var(--color-accent);
+            border-radius: 4px;
+            padding: 0.2rem var(--spacing-sm);
+            margin: 0.25rem 0;
+            overflow-x: auto;
+        }
+        .math-body .formula .katex { font-size: 0.9em; }
+        .math-body .numeric {
+            font-size: 0.74rem;
+            color: var(--color-text-secondary);
+            margin: -0.05rem 0 0.25rem;
+            overflow-x: auto;
+        }
+        .math-body p { margin-bottom: 0.25rem; }
+        .math-body ul { margin: 0.2rem 0 0.3rem 1.1rem; }
+        .math-body li { margin-bottom: 0.1rem; }
+        .source {
+            margin-top: var(--spacing-sm);
+            font-size: 0.74rem;
+            color: var(--color-text-secondary);
+            border-top: 1px solid var(--color-border);
+            padding-top: var(--spacing-xs);
+        }
+        .source a { color: var(--color-accent); }
+
+        /* Footer */
+        .footer {
+            padding: var(--spacing-xs) var(--spacing-lg);
+            background: var(--color-background);
+            border-top: 1px solid var(--color-border);
+            font-size: 0.76rem;
+            color: var(--color-text-secondary);
+            text-align: center;
+        }
+
+        /* Responsive: stack columns on narrow screens */
+        @media (max-width: 1200px) {
+            .main-content { grid-template-columns: 260px minmax(0, 1fr); }
+            .math-panel { grid-column: 1 / -1; }
+        }
+        @media (max-width: 820px) {
+            .main-content { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- =========================== HEADER =========================== -->
+        <header class="header">
+            <div>
+                <h1>Urban Mining Explorer</h1>
+                <span class="subtitle">End of life forecasting with the Weibull distribution</span>
+            </div>
+            <button class="reset-btn" id="resetBtn" title="Reset all inputs to their default values">Reset defaults</button>
+        </header>
+
+        <!-- ===================== EDUCATIONAL CONTEXT ==================== -->
+        <section class="intro">
+            <p>
+                The <strong>Weibull distribution</strong> models how failure probability changes with age,
+                capturing the wear and degradation of physical assets. It is the standard tool in
+                reliability engineering and material flow analysis. In this applet the asset is a
+                vehicle cohort: as cars age, the survival function tracks how many enter the scrap
+                stream each year, forecasting the recovery of <strong>Critical Raw Materials (CRMs)</strong>
+                to support the Dutch <strong>Raw Materials Strategy (Grondstoffenstrategie)</strong>
+                and recyclers such as <strong>ARN (Auto Recycling Nederland)</strong>.
+            </p>
+        </section>
+
+        <!-- ========================= MAIN LAYOUT ======================== -->
+        <div class="main-content">
+
+            <!-- ----------------------- COLUMN 1: INPUTS ----------------- -->
+            <aside class="column">
+                <div class="panel">
+                    <div class="panel-title">Inputs</div>
+
+                    <!-- Car type dropdown -->
+                    <div class="control-group">
+                        <label class="control-label" for="carType">Car type</label>
+                        <select id="carType">
+                            <option value="ICEV">ICEV (Fuel)</option>
+                            <option value="EV">EV (Electric)</option>
+                        </select>
+                        <div class="control-hint">Determines the fitted Weibull shape and scale for that powertrain type.</div>
+                    </div>
+
+                    <!-- Build year slider -->
+                    <div class="control-group">
+                        <label class="control-label" for="buildYear">
+                            Build year (model year)
+                            <span class="control-value" id="buildYearVal">2018</span>
+                        </label>
+                        <input type="range" id="buildYear" min="2010" max="2025" step="1" value="2018">
+                    </div>
+
+                    <!-- Fleet size slider -->
+                    <div class="control-group">
+                        <label class="control-label" for="fleetSize">
+                            Sales in build year (fleet)
+                            <span class="control-value" id="fleetSizeVal">100,000</span>
+                        </label>
+                        <input type="range" id="fleetSize" min="10000" max="200000" step="5000" value="100000">
+                        <div class="control-hint">Number of vehicles in this cohort.</div>
+                    </div>
+
+                    <!-- Forecast year slider -->
+                    <div class="control-group">
+                        <label class="control-label" for="forecastYear">
+                            Forecast year
+                            <span class="control-value" id="forecastYearVal">2035</span>
+                        </label>
+                        <input type="range" id="forecastYear" min="2026" max="2050" step="1" value="2035">
+                        <div class="control-hint">Move the slider and read where the dashed line crosses the curves.</div>
+                    </div>
+                </div>
+
+                <!-- Active model parameters -->
+                <div class="panel">
+                    <div class="panel-title">Active model parameters</div>
+                    <div class="param-box">
+                        <div class="row"><span>Vehicle</span><span id="pVehicle">ICEV</span></div>
+                        <div class="row"><span>&alpha; (shape)</span><span id="pAlpha">3.2</span></div>
+                        <div class="row"><span>&beta; (scale)</span><span id="pBeta">17.5 yr</span></div>
+                        <div class="row"><span>Age <em>t</em> in forecast year</span><span id="pAge">17 yr</span></div>
+                        <div class="row peak"><span>Peak scrappage</span><span id="pPeak">&ndash;</span></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ----------------------- COLUMN 2: DASHBOARD -------------- -->
+            <section class="column">
+
+                <!-- KPI cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card accent-blue">
+                        <div class="kpi-label" id="kpi1Label">Vehicles still on the road in 2035</div>
+                        <div class="kpi-value blue" id="kpi1Value">&ndash;</div>
+                        <div class="kpi-sub" id="kpi1Sub">survival probability &times; fleet</div>
+                    </div>
+                    <div class="kpi-card accent-orange">
+                        <div class="kpi-label" id="kpi2Label">Scrapped in exactly 2035 (annual yield)</div>
+                        <div class="kpi-value orange" id="kpi2Value">&ndash;</div>
+                        <div class="kpi-sub" id="kpi2Sub">annual urban mine output</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label" id="kpi3Label">Cumulative scrapped up to 2035</div>
+                        <div class="kpi-value" id="kpi3Value">&ndash;</div>
+                        <div class="kpi-sub" id="kpi3Sub">total mine so far</div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="panel chart-panel">
+                    <div class="chart-title">Cohort lifecycle</div>
+                    <div class="chart-subtitle">
+                        Blue: S(t) survival function (vehicles in service) &nbsp;|&nbsp;
+                        Orange: p(t) annual outflow probability (vehicles scrapped per year) &nbsp;|&nbsp;
+                        Dashed: selected forecast year
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="lifecycleChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------------- COLUMN 3: METHODOLOGY ----------- -->
+            <aside class="column">
+                <div class="panel math-panel">
+                    <div class="panel-title">Why the Weibull distribution?</div>
+                    <div class="math-body">
+                        <p>
+                            Most durable assets exhibit failure that accelerates with age: a car that is
+                            20 years old is far more likely to be scrapped than one that is 5 years old.
+                            A constant-rate (exponential) model cannot represent this pattern. The Weibull
+                            distribution does, through its <strong>shape parameter</strong>
+                            <span id="texAlpha"></span>:
+                        </p>
+                        <ul>
+                            <li><strong>&alpha; &gt; 1</strong>: hazard increases with age (wear; typical of vehicles)</li>
+                            <li><strong>&alpha; = 1</strong>: constant hazard (equivalent to the exponential distribution)</li>
+                            <li><strong>&alpha; &lt; 1</strong>: hazard decreases with age (early defects dominate)</li>
+                        </ul>
+                        <p>
+                            The <strong>scale parameter</strong> <span id="texBeta"></span> is the characteristic lifespan:
+                            the age by which 63% of any cohort has been scrapped.
+                        </p>
+
+                        <p><strong>Survival function</strong> S(t): fraction of the cohort still in service at age <span id="texT"></span>:</p>
+                        <div class="formula" id="formulaS"></div>
+                        <div class="numeric" id="numericS"></div>
+
+                        <p><strong>Annual outflow probability</strong> p(t): fraction of the cohort scrapped during year <em>t</em>:</p>
+                        <div class="formula" id="formulaF"></div>
+                        <div class="numeric" id="numericF"></div>
+
+                        <p>Scaled to the initial cohort size <span id="texN"></span>,
+                        the KPI cards show: <span id="texStock"></span> (in service) and
+                        <span id="texScrap"></span> (scrapped this year).</p>
+                        <p style="font-size:0.78rem;color:var(--color-text-secondary);">
+                            When the forecast year precedes the build year (<em>t</em> is negative),
+                            survival is 100% and outflow is zero.
+                        </p>
+
+                        <div class="source">
+                            <strong>References:</strong>
+                            Held et&nbsp;al. (2021), <em>Resources, Conservation and Recycling</em>, 171.
+                            Cossu and Williams (2015), <em>Waste Management</em>, 45.
+                            The &alpha; and &beta; values are illustrative proxies for the Dutch fleet.
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="footer">
+            Educational applet &middot; HZ University of Applied Sciences &middot; Finance and Business &middot;
+            Weibull end of life forecasting for the circular economy.
+        </footer>
+    </div>
+
+    <script>
+    /* ====================================================================
+       URBAN MINING EXPLORER — JavaScript engine
+       --------------------------------------------------------------------
+       This applet forecasts when a cohort of cars (all sold in one "build
+       year") will reach End-of-Life, using the Weibull survival function.
+       The code is intentionally verbose and commented so business students
+       can inspect it and understand the underlying mathematics.
+       ==================================================================== */
+
+    // --- 1. Hard-coded Weibull parameters (Dutch proxy data) -------------
+    // Alpha = shape parameter (how "peaked" the scrappage curve is)
+    // Beta  = scale parameter (≈ characteristic lifespan in years)
+    const PARAMS = {
+        ICEV: { alpha: 3.2, beta: 17.5, label: "ICEV (Fuel)" },
+        // EVs assumed shorter lifespan due to battery degradation assumptions
+        EV:   { alpha: 2.8, beta: 14.0, label: "EV (Electric)" }
+    };
+
+    // Rough average mass of recoverable metals per scrapped car (tonnes).
+    // Used only to make the "urban mine" yield tangible for students.
+    const METALS_PER_CAR_T = 0.9;
+
+    // Default values (used by the Reset button)
+    const DEFAULTS = { carType: 'ICEV', buildYear: 2018, fleetSize: 100000, forecastYear: 2035 };
+
+    // --- 2. Core Weibull formulas ---------------------------------------
+    // Survival function S(t): fraction of the cohort still on the road.
+    function survival(t, alpha, beta) {
+        if (t < 0) return 1;                       // before build year -> 100%
+        return Math.exp(-Math.pow(t / beta, alpha));
+    }
+
+    // Exact one-year outflow probability for the year ending at age t.
+    // This avoids treating the continuous PDF as if it were a yearly probability.
+    function annualOutflowProbability(t, alpha, beta) {
+        if (t <= 0) return 0;
+        return survival(t - 1, alpha, beta) - survival(t, alpha, beta);
+    }
+
+    // Integer age where the annual outflow is highest.
+    function peakAnnualOutflowAge(alpha, beta) {
+        let bestAge = 0;
+        let bestOutflow = 0;
+        for (let age = 1; age <= 80; age++) {
+            const outflow = annualOutflowProbability(age, alpha, beta);
+            if (outflow > bestOutflow) {
+                bestAge = age;
+                bestOutflow = outflow;
+            }
+        }
+        return bestAge;
+    }
+
+    // --- 3. Cache DOM references ----------------------------------------
+    const el = {
+        carType:       document.getElementById('carType'),
+        buildYear:     document.getElementById('buildYear'),
+        fleetSize:     document.getElementById('fleetSize'),
+        forecastYear:  document.getElementById('forecastYear'),
+        buildYearVal:  document.getElementById('buildYearVal'),
+        fleetSizeVal:  document.getElementById('fleetSizeVal'),
+        forecastYearVal: document.getElementById('forecastYearVal'),
+        resetBtn:      document.getElementById('resetBtn'),
+        // parameter readout
+        pVehicle: document.getElementById('pVehicle'),
+        pAlpha:   document.getElementById('pAlpha'),
+        pBeta:    document.getElementById('pBeta'),
+        pAge:     document.getElementById('pAge'),
+        pPeak:    document.getElementById('pPeak'),
+        // KPI cards
+        kpi1Label: document.getElementById('kpi1Label'),
+        kpi1Value: document.getElementById('kpi1Value'),
+        kpi1Sub:   document.getElementById('kpi1Sub'),
+        kpi2Label: document.getElementById('kpi2Label'),
+        kpi2Value: document.getElementById('kpi2Value'),
+        kpi2Sub:   document.getElementById('kpi2Sub'),
+        kpi3Label: document.getElementById('kpi3Label'),
+        kpi3Value: document.getElementById('kpi3Value'),
+        kpi3Sub:   document.getElementById('kpi3Sub')
+    };
+
+    // --- 4. Number formatting helpers (English locale) ------------------
+    const nf0 = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
+    const nf1 = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 });
+
+    // --- 5. Chart.js setup ----------------------------------------------
+    const HORIZON = 30; // we always plot the cohort lifecycle over 0..30 years
+    const ctx = document.getElementById('lifecycleChart').getContext('2d');
+
+    // Plugin that draws a vertical dashed marker at the selected forecast age.
+    const forecastMarker = {
+        id: 'forecastMarker',
+        afterDatasetsDraw(chart, args, opts) {
+            const ageIndex = opts.ageIndex;
+            if (ageIndex == null || ageIndex < 0) return;
+            const xScale = chart.scales.x;
+            const x = xScale.getPixelForValue(ageIndex);
+            const top = chart.chartArea.top;
+            const bottom = chart.chartArea.bottom;
+            const c = chart.ctx;
+            c.save();
+            c.beginPath();
+            c.setLineDash([6, 5]);
+            c.lineWidth = 2;
+            c.strokeStyle = '#154273';
+            c.moveTo(x, top);
+            c.lineTo(x, bottom);
+            c.stroke();
+            // label
+            c.setLineDash([]);
+            c.fillStyle = '#154273';
+            c.font = '600 12px sans-serif';
+            c.textAlign = 'center';
+            c.fillText('forecast year', x, top + 12);
+            c.restore();
+        }
+    };
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({ length: HORIZON + 1 }, (_, i) => i), // ages 0..30
+            datasets: [
+                {
+                    label: 'On the road (survival)',
+                    data: [],
+                    borderColor: '#154273',
+                    backgroundColor: 'rgba(21, 66, 115, 0.08)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.25,
+                    pointRadius: 0,
+                    yAxisID: 'yStock'
+                },
+                {
+                    label: 'Scrapped per year (annual outflow)',
+                    data: [],
+                    borderColor: '#e17000',
+                    backgroundColor: 'rgba(225, 112, 0, 0.12)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.25,
+                    pointRadius: 0,
+                    yAxisID: 'yFlow'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                forecastMarker: { ageIndex: -1 },
+                tooltip: {
+                    callbacks: {
+                        title: (items) => 'Age: ' + items[0].label + ' years',
+                        label: (item) => item.dataset.label + ': ' + nf0.format(item.parsed.y)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Vehicle age (years since build year)' },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                },
+                yStock: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Vehicles on the road', color: '#154273' },
+                    ticks: { color: '#154273', callback: (v) => nf0.format(v) },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                },
+                yFlow: {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Scrapped per year', color: '#e17000' },
+                    ticks: { color: '#e17000', callback: (v) => nf0.format(v) },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        },
+        plugins: [forecastMarker]
+    });
+
+    // --- 6. Main update function ----------------------------------------
+    function update() {
+        // Read current inputs
+        const type         = el.carType.value;
+        const buildYear    = parseInt(el.buildYear.value, 10);
+        const fleetSize    = parseInt(el.fleetSize.value, 10);
+        const forecastYear = parseInt(el.forecastYear.value, 10);
+        const { alpha, beta, label } = PARAMS[type];
+
+        // Enforce a sensible range: forecast year must be >= build year for a meaningful result
+        // (the model handles t < 0 gracefully, but the slider still allows it deliberately)
+        // Update slider value labels
+        el.buildYearVal.textContent    = buildYear;
+        el.fleetSizeVal.textContent    = nf0.format(fleetSize);
+        el.forecastYearVal.textContent = forecastYear;
+
+        // Age of the cohort in the forecast year
+        const tForecast = forecastYear - buildYear;
+
+        // Peak scrappage age + calendar year (useful for capacity planning)
+        const tPeak = peakAnnualOutflowAge(alpha, beta);
+        const peakYear = buildYear + tPeak;
+
+        // Update parameter readout
+        el.pVehicle.textContent = label;
+        el.pAlpha.textContent   = nf1.format(alpha);
+        el.pBeta.textContent    = nf1.format(beta) + ' yr';
+        el.pAge.textContent     = tForecast + ' yr';
+        el.pPeak.textContent    = tPeak + ' yr (' + peakYear + ')';
+
+        // ---- Build the lifecycle curves over ages 0..HORIZON ----
+        const stockSeries = [];
+        const flowSeries  = [];
+        for (let t = 0; t <= HORIZON; t++) {
+            stockSeries.push(fleetSize * survival(t, alpha, beta));
+            flowSeries.push(fleetSize * annualOutflowProbability(t, alpha, beta));
+        }
+        chart.data.datasets[0].data = stockSeries;
+        chart.data.datasets[1].data = flowSeries;
+
+        // Position the vertical forecast marker (only if within plotted range)
+        chart.options.plugins.forecastMarker.ageIndex =
+            (tForecast >= 0 && tForecast <= HORIZON) ? tForecast : -1;
+        chart.update();
+
+        // ---- KPI calculations ----
+        // 1. Vehicles remaining on the road in the forecast year
+        const remaining = fleetSize * survival(tForecast, alpha, beta);
+        // 2. Vehicles scrapped in the forecast year (exact annual interval probability)
+        const scrappedThisYear = fleetSize * annualOutflowProbability(tForecast, alpha, beta);
+        // 3. Cumulative scrapped up to and including the forecast year.
+        //    Cumulative scrappage = N * (1 - S(t)) — the complement of survival.
+        const cumulativeScrapped = (tForecast < 0)
+            ? 0
+            : fleetSize * (1 - survival(tForecast, alpha, beta));
+
+        const remainingPct = survival(tForecast, alpha, beta) * 100;
+
+        // ---- Update KPI cards (labels react to forecast year) ----
+        el.kpi1Label.textContent = `Vehicles still on the road in ${forecastYear}`;
+        el.kpi2Label.textContent = `Scrapped in exactly ${forecastYear} (annual yield)`;
+        el.kpi3Label.textContent = `Cumulative scrapped up to ${forecastYear}`;
+
+        if (tForecast < 0) {
+            // Forecast year precedes build year — cohort doesn't exist yet
+            el.kpi1Value.textContent = nf0.format(fleetSize);
+            el.kpi1Sub.textContent   = 'cohort not yet scrapped (t < 0)';
+            el.kpi2Value.textContent = '0';
+            el.kpi2Sub.textContent   = 'annual urban mine output';
+            el.kpi3Value.textContent = '0';
+            el.kpi3Sub.textContent   = 'n/a';
+        } else {
+            el.kpi1Value.textContent = nf0.format(Math.round(remaining));
+            el.kpi1Sub.textContent   = nf1.format(remainingPct) + '% of the fleet survives';
+            el.kpi2Value.textContent = nf0.format(Math.round(scrappedThisYear));
+            // Make the yield tangible: convert to tonnes of recoverable metals
+            el.kpi2Sub.textContent   = 'approx. ' + nf0.format(Math.round(scrappedThisYear * METALS_PER_CAR_T)) +
+                                       ' t recoverable metals';
+            el.kpi3Value.textContent = nf0.format(Math.round(cumulativeScrapped));
+            el.kpi3Sub.textContent   = nf1.format(100 - remainingPct) + '% of the fleet scrapped';
+        }
+
+        // Refresh the rendered math with the live parameters
+        renderMath(alpha, beta, tForecast, fleetSize, remaining, scrappedThisYear);
+    }
+
+    // --- 7. Render the KaTeX formulas (live values) ---------------------
+    function renderMath(alpha, beta, t, N, remaining, scrapped) {
+        const opt = { throwOnError: false, displayMode: false };
+
+        katex.render('t', document.getElementById('texT'), opt);
+        katex.render('\\alpha', document.getElementById('texAlpha'), opt);
+        katex.render('\\beta', document.getElementById('texBeta'), opt);
+        katex.render('N', document.getElementById('texN'), opt);
+
+        // Survival function (symbolic) + numeric substitution underneath
+        katex.render(
+            'S(t) = e^{-\\left(\\frac{t}{\\beta}\\right)^{\\alpha}}',
+            document.getElementById('formulaS'),
+            { throwOnError: false, displayMode: false }
+        );
+        document.getElementById('numericS').textContent =
+            (t < 0)
+                ? 't < 0  →  S(t) = 1 (100%)'
+                : `t = ${t}: S(${t}) = e^-(${t}/${beta})^${alpha} = ${nf1.format(survival(t, alpha, beta) * 100)}%`;
+
+        // Annual outflow probability (symbolic) + numeric substitution
+        katex.render(
+            'p(t) = S(t-1) - S(t)',
+            document.getElementById('formulaF'),
+            { throwOnError: false, displayMode: false }
+        );
+        document.getElementById('numericF').textContent =
+            (t < 0)
+                ? 't < 0  ->  p(t) = 0'
+                : `t = ${t}: p(${t}) = S(${t - 1}) - S(${t}) = ${nf1.format(annualOutflowProbability(t, alpha, beta) * 100)}% of the fleet`;
+
+        katex.render('\\text{Stock} = N \\cdot S(t)', document.getElementById('texStock'), opt);
+        katex.render('\\text{Scrapped} = N \\cdot f(t)', document.getElementById('texScrap'), opt);
+    }
+
+    // --- 8. Wire up event listeners -------------------------------------
+    ['carType', 'buildYear', 'fleetSize', 'forecastYear'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+
+    // Reset button restores the default inputs
+    el.resetBtn.addEventListener('click', () => {
+        el.carType.value      = DEFAULTS.carType;
+        el.buildYear.value    = DEFAULTS.buildYear;
+        el.fleetSize.value    = DEFAULTS.fleetSize;
+        el.forecastYear.value = DEFAULTS.forecastYear;
+        update();
+    });
+
+    // --- 9. Initial render (wait for KaTeX to load) ---------------------
+    window.addEventListener('load', update);
+    </script>
+</body>
+</html>
