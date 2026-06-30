@@ -17,14 +17,14 @@
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
             margin: 0;
-            padding: 15px;
+            padding: 10px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
             background: white;
-            border: 2px solid #ddd;
+            border: 1px solid #ddd;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -32,51 +32,51 @@
         .header {
             background-color: #2c5aa0;
             color: white;
-            padding: 15px 20px;
+            padding: 10px 16px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2.1rem;
-            margin-bottom: 5px;
+            font-size: 1.55rem;
+            margin-bottom: 3px;
             font-weight: 300;
         }
 
         .header p {
-            font-size: 1.05rem;
+            font-size: 0.92rem;
             opacity: 0.9;
             margin-bottom: 0;
         }
 
         .main-content {
             display: grid;
-            grid-template-columns: 1.05fr 1.15fr 1fr;
-            gap: 18px;
-            padding: 20px;
+            grid-template-columns: 0.95fr 1.2fr 0.95fr;
+            gap: 12px;
+            padding: 12px;
         }
 
         .panel {
             background: #f8f9ff;
             border-radius: 10px;
-            padding: 14px;
+            padding: 10px;
         }
 
         .card-box {
             background: white;
             border: 2px solid #e0e6ed;
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 14px;
+            padding: 10px;
+            margin-bottom: 10px;
         }
 
         .card-box h3 {
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 1rem;
+            margin-bottom: 6px;
+            font-size: 0.94rem;
         }
 
         .subtle {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: #666;
         }
 
@@ -90,9 +90,9 @@
 
         .ipf-table th, .ipf-table td {
             border: 1px solid #d4dae3;
-            padding: 4px;
+            padding: 3px;
             text-align: center;
-            font-size: 0.78rem;
+            font-size: 0.74rem;
         }
 
         .ipf-table th {
@@ -113,23 +113,23 @@
 
         .data-input {
             width: 100%;
-            max-width: 60px;
-            padding: 3px;
+            max-width: 54px;
+            padding: 2px;
             border: 1px solid #ccc;
             border-radius: 3px;
             text-align: center;
-            font-size: 0.78rem;
+            font-size: 0.74rem;
         }
 
         .target-input {
             width: 100%;
-            max-width: 60px;
-            padding: 3px;
+            max-width: 54px;
+            padding: 2px;
             border: 1px solid #f0a500;
             background: #fff8e6;
             border-radius: 3px;
             text-align: center;
-            font-size: 0.78rem;
+            font-size: 0.74rem;
             font-weight: bold;
         }
 
@@ -167,18 +167,18 @@
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
         .btn {
             flex: 1 1 auto;
             min-width: 90px;
-            padding: 9px 10px;
+            padding: 7px 9px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: bold;
             transition: all 0.2s ease;
         }
@@ -194,31 +194,31 @@
         .status-display {
             background-color: #2c5aa0;
             color: white;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
-        .status-display h3 { font-size: 1rem; margin-bottom: 8px; }
+        .status-display h3 { font-size: 0.94rem; margin-bottom: 6px; }
 
         .status-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 0;
+            padding: 3px 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .status-item:last-child { border-bottom: none; }
         .status-value { font-weight: bold; }
 
         .op-banner {
             text-align: center;
-            padding: 8px;
+            padding: 7px;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 0.85rem;
-            margin-bottom: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
             background: #fff3d6;
             color: #8a6300;
             border: 1px solid #f0a500;
@@ -231,13 +231,13 @@
             background: white;
             border: 2px solid #e0e6ed;
             border-radius: 8px;
-            padding: 8px;
-            margin-bottom: 12px;
+            padding: 6px;
+            margin-bottom: 8px;
         }
         .plot-title {
             text-align: center;
-            margin-bottom: 6px;
-            font-size: 0.92rem;
+            margin-bottom: 4px;
+            font-size: 0.84rem;
             font-weight: bold;
             color: #2c3e50;
         }
@@ -246,33 +246,19 @@
         .formula-display {
             background-color: #f8f9ff;
             border-left: 4px solid #4facfe;
-            padding: 10px;
+            padding: 7px;
             margin-top: 6px;
             border-radius: 0 8px 8px 0;
-        }
-        .formula { text-align: center; margin: 6px 0; }
-
-        .scenario-btn {
-            width: 100%;
-            padding: 7px 9px;
-            border: 2px solid #e0e6ed;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
             font-size: 0.78rem;
-            text-align: left;
-            margin-bottom: 6px;
-            transition: all 0.2s ease;
         }
-        .scenario-btn:hover { border-color: #4facfe; background-color: #f8f9ff; }
-        .scenario-btn strong { color: #2c3e50; }
+        .formula { text-align: center; margin: 4px 0; }
 
         .story {
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             color: #34404d;
-            line-height: 1.5;
+            line-height: 1.38;
         }
-        .story p { margin-bottom: 8px; }
+        .story p { margin-bottom: 6px; }
         .story .tag {
             display: inline-block;
             background: #eef4ff;
@@ -297,10 +283,10 @@
             color: #8a6d3b;
             border: 1px solid #f0d99b;
             border-radius: 6px;
-            padding: 8px 10px;
-            font-size: 0.78rem;
+            padding: 7px 9px;
+            font-size: 0.74rem;
             line-height: 1.4;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             display: none;
         }
 
@@ -336,15 +322,6 @@
         }
         details[open] summary::before { content: '- '; }
 
-        .scenario-btn strong {
-            display: block;
-        }
-
-        .scenario-btn {
-            font-size: 0.8rem;
-            line-height: 1.35;
-            padding: 7px 10px;
-        }
     </style>
 </head>
 <body>
@@ -361,18 +338,12 @@
                 <div class="card-box">
                     <h3>The Problem: A Skewed Survey</h3>
                     <div class="story">
-                        <p>The student council ran a satisfaction survey at your school. You collected
-                        <strong>225 responses</strong>, split by study programme and year group
-                        (the blue table: Raw survey counts). The problem: Business &amp; Management
-                        students are <strong>over-represented</strong> and IT &amp; Technology students
-                        are <strong>under-represented</strong>.</p>
-                        <p>The administration provides the true enrolment numbers (the
-                        <span style="color:#7a5500;font-weight:bold;">orange margins</span>):
-                        how many students actually study each programme, and how many per year group.
-                        These are your <strong>targets</strong>.</p>
-                        <p>IPF reweights the cells so both sets of totals match the real population,
-                        while keeping the internal pattern of responses intact. The result gives
-                        correctly weighted counts for computing representative averages.</p>
+                        <p>A student survey has <strong>225 responses</strong> by programme and year group,
+                        but the sample mix is biased. Business is over-represented and IT &amp; Tech is
+                        under-represented.</p>
+                        <p>The orange margins are the known enrolment totals. IPF rescales the cells
+                        until both row and column totals match those targets while preserving the
+                        response pattern inside the table.</p>
                     </div>
                 </div>
 
@@ -420,29 +391,9 @@
                         <span><span class="swatch" style="background:#fff3d6;"></span>true enrolment targets</span>
                     </div>
                     <p class="subtle" style="margin-top:6px;">
-                        The corner cell checks whether programme totals and year-group totals agree.
+                        The corner cell checks whether the two target totals agree.
                         IPF only converges fully when both target sums are equal.
                     </p>
-                </div>
-
-                <div class="card-box">
-                    <h3>Example Scenarios</h3>
-                    <button class="scenario-btn" data-scenario="biased">
-                        <strong>Biased Sample (default)</strong>
-                        Business and Year 1 are over-sampled relative to true enrolment.
-                    </button>
-                    <button class="scenario-btn" data-scenario="bigyr1">
-                        <strong>Large Year 1 Intake</strong>
-                        A surge in new students: Year 1 is now much larger than other years.
-                    </button>
-                    <button class="scenario-btn" data-scenario="balanced">
-                        <strong>Already Proportional</strong>
-                        Sample proportions already match enrolment &mdash; scaling factors stay near 1.
-                    </button>
-                    <button class="scenario-btn" data-scenario="inconsistent">
-                        <strong>Inconsistent Targets</strong>
-                        Programme and year-group totals do not agree &mdash; never fully settles.
-                    </button>
                 </div>
             </div>
             <!-- ============ MIDDLE: LIVE ALGORITHM ============ -->
@@ -472,7 +423,7 @@
 
                 <div class="plot-container">
                     <div class="plot-title">Convergence &mdash; largest relative margin error per step</div>
-                    <canvas id="convChart" width="380" height="170"></canvas>
+                    <canvas id="convChart" width="380" height="135"></canvas>
                 </div>
 
                 <div class="formula-display">
@@ -518,49 +469,22 @@
                 </div>
 
                 <div class="card-box">
-                    <h3>What just happened?</h3>
+                    <h3>IPF in three moves</h3>
+                    <div class="story">
+                        <p><strong>1.</strong> Scale rows to match programme totals.<br>
+                        <strong>2.</strong> Scale columns to match year-group totals.<br>
+                        <strong>3.</strong> Repeat until the remaining margin error is negligible.</p>
+                    </div>
+                </div>
+
+                <div class="card-box">
+                    <h3>Current step</h3>
                     <div class="story" id="explain-step">
                         Press <strong>Step</strong> to scale each programme row so it hits its true
                         enrolment total. Then watch how that slightly shifts the year-group column
                         totals, and how the next step corrects them &mdash; back and forth until the
                         adjustments become negligible.
                     </div>
-                </div>
-
-                <div class="card-box">
-                    <details>
-                        <summary>What is IPF, in one minute?</summary>
-                        <div class="story">
-                            <p>You have a table with known internal values but the row and column totals
-                            no longer match the targets you care about. IPF fixes this by alternating
-                            two simple operations:</p>
-                            <p><strong>1.</strong> Scale every row so row totals hit their targets.<br>
-                            <strong>2.</strong> That shifts column totals &mdash; so scale every column.<br>
-                            <strong>3.</strong> That slightly shifts row totals &mdash; repeat from 1.</p>
-                            <p>Each round the corrections shrink. Within a handful of steps the table
-                            <em>converges</em>: all edges match, and the internal proportions stay as
-                            close to the original as mathematics allows.</p>
-                        </div>
-                    </details>
-                </div>
-
-                <div class="card-box">
-                    <details>
-                        <summary>Where does IPF come from?</summary>
-                        <div class="story">
-                            <p>Invented by <span class="tag">Deming &amp; Stephan (1940)</span> to adjust
-                            sampled frequency tables to known marginal totals. The same idea was
-                            independently re-discovered in several fields under different names:</p>
-                            <p>
-                            <span class="tag">Raking</span> in survey research &mdash; reweight poll
-                            results to match age, gender, and region profiles of the population.<br><br>
-                            <span class="tag">RAS method</span> in economics &mdash; update
-                            input&ndash;output tables when only new sector totals are known.<br><br>
-                            <span class="tag">Fratar method (1954)</span> in transport planning &mdash;
-                            forecast future traffic flows between city zones from current trip patterns.
-                            </p>
-                        </div>
-                    </details>
                 </div>
             </div>
 
@@ -583,6 +507,7 @@
         let nextOp     = 'row';
         let lastOp     = 'none';
         let converged  = false;
+        let setupValid = true;
         let lastFactors   = null;
         let errorHistory  = [];
 
@@ -641,6 +566,8 @@
         }
 
         function doStep() {
+            renderGrandCheck();
+            if (!setupValid) return;
             if (converged) return;
             const factors = [];
 
@@ -694,9 +621,9 @@
 
             if (converged) {
                 ob.className = 'op-banner done-op';
-                ob.innerHTML = 'Converged. All programme and year-group totals now match the true enrolment.';
+                ob.innerHTML = 'Converged. The margins are now within the 0.1% tolerance threshold.';
                 ex.innerHTML = 'The corrections shrank below the tolerance threshold (' + (TOL * 100) + '%). ' +
-                    'The reweighted table now represents the actual student population: all margins match, ' +
+                    'The reweighted table now represents the actual student population within tolerance, ' +
                     'and the internal response pattern stays as close as possible to the original survey.';
                 return;
             }
@@ -740,8 +667,8 @@
             renderMarginTables();
             renderStatus();
             renderChart();
-            document.getElementById('step-btn').disabled = converged;
-            document.getElementById('run-btn').disabled  = converged;
+            document.getElementById('step-btn').disabled = converged || !setupValid;
+            document.getElementById('run-btn').disabled  = converged || !setupValid;
         }
 
         function renderGrandCheck() {
@@ -750,11 +677,20 @@
             const sc = targetCols.reduce((a, b) => a + b, 0);
             const el = document.getElementById('grand-check');
             const wb = document.getElementById('warn-box');
-            if (Math.abs(sr - sc) < 1e-9) {
+            const supportIssues = [];
+            for (let i = 0; i < 3; i++) {
+                if (rowSum(baseline, i) === 0 && targetRows[i] > 0) supportIssues.push(PROGS[i] + ' has a positive target but no observed responses');
+            }
+            for (let j = 0; j < 3; j++) {
+                if (colSum(baseline, j) === 0 && targetCols[j] > 0) supportIssues.push(YEARS[j] + ' has a positive target but no observed responses');
+            }
+            setupValid = Math.abs(sr - sc) < 1e-9 && supportIssues.length === 0;
+
+            if (setupValid) {
                 el.textContent = sr.toFixed(0);
                 el.style.color  = '#16a34a';
                 wb.style.display = 'none';
-            } else {
+            } else if (Math.abs(sr - sc) >= 1e-9) {
                 el.innerHTML    = sr + ' \u2260 ' + sc;
                 el.style.color  = '#dc2626';
                 wb.style.display = 'block';
@@ -762,6 +698,12 @@
                     ' but year-group totals sum to ' + sc +
                     '. IPF will keep bouncing and never fully settle \u2014 ' +
                     'fix the targets so both sums are equal.';
+            } else {
+                el.textContent = sr.toFixed(0);
+                el.style.color = '#dc2626';
+                wb.style.display = 'block';
+                wb.innerHTML = '<strong>Impossible support:</strong> ' + supportIssues.join('; ') +
+                    '. IPF can preserve zero cells, but it cannot create a positive total from a completely empty row or column.';
             }
         }
 
@@ -908,39 +850,6 @@
             });
         }
 
-        // ---------- scenarios ----------
-        const BASE = [[80, 40, 20], [20, 15, 8], [20, 12, 10]];
-
-        const SCENARIOS = {
-            biased: {
-                base: BASE,
-                tr: [450, 300, 250], tc: [400, 380, 220]   // both sum to 1000
-            },
-            bigyr1: {
-                base: BASE,
-                tr: [450, 300, 250], tc: [600, 280, 120]   // both sum to 1000; Year 1 surges
-            },
-            balanced: {
-                // targets proportional to baseline row/col sums (140,43,42 / 120,67,38) → scaled to 1000
-                base: BASE,
-                tr: [622, 191, 187], tc: [533, 298, 169]   // both sum to 1000
-            },
-            inconsistent: {
-                base: BASE,
-                tr: [450, 300, 250], tc: [500, 380, 220]   // 1000 vs 1100
-            }
-        };
-
-        function applyScenario(name) {
-            const s = SCENARIOS[name];
-            for (let i = 0; i < 3; i++)
-                for (let j = 0; j < 3; j++)
-                    document.getElementById(`b-${i}-${j}`).value = s.base[i][j];
-            s.tr.forEach((v, i) => document.getElementById(`tr-${i}`).value = v);
-            s.tc.forEach((v, j) => document.getElementById(`tc-${j}`).value = v);
-            reset();
-        }
-
         // ---------- KaTeX formulas ----------
         function renderFormulas() {
             if (!window.katex) return;
@@ -960,9 +869,6 @@
         document.getElementById('step-btn').addEventListener('click', doStep);
         document.getElementById('run-btn').addEventListener('click', runToConvergence);
         document.getElementById('reset-btn').addEventListener('click', reset);
-
-        document.querySelectorAll('.scenario-btn').forEach(btn =>
-            btn.addEventListener('click', () => applyScenario(btn.dataset.scenario)));
 
         document.querySelectorAll('.data-input, .target-input').forEach(inp =>
             inp.addEventListener('input', reset));
