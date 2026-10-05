@@ -19,6 +19,9 @@ A collection of interactive teaching tools for statistics and finance concepts.
 - **Break-Even Analysis Explorer** - Visualize where revenue meets total cost and explore the contribution margin
 - **Urban Mining Explorer** - Forecast physical asset lifetimes and critical raw material recycling yields using the Weibull survival function and hazard rates
 
+### Supply Chain
+- **Center of Gravity** - Find the volume-weighted average position across target markets to identify candidate facility locations
+
 ## Usage
 
 Simply open `index.html` in your browser or visit the live site.

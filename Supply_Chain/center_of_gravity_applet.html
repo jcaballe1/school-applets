@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Center of gravity: a first pin on the map</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+  :root {
+    --bg: #e9ecef;
+    --paper: #fff;
+    --ink: #212529;
+    --muted: #495057;
+    --line: #dfe3e7;
+    --teal: #8e2256;
+    --copper: #d63384;
+    --copper-soft: #fae9f1;
+    --blue: #0756a3;
+    --good: #198754;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    border-top: 4px solid var(--copper);
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.4 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--copper);
+    outline-offset: 2px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 14px 20px 32px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 10px; }
+  header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .kicker {
+    margin: 0;
+    color: var(--copper);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .activity { margin-bottom: 14px; border-left: 4px solid var(--copper); background: #fcf9fb; }
+  .activity h2 { margin: 0 0 6px; font-size: 17px; color: var(--teal); }
+  .activity ol { margin: 0; padding-left: 20px; font-size: 14.5px; }
+  .activity li + li { margin-top: 4px; }
+  .activity p { margin: 8px 0 0; font-size: 14.5px; }
+  .concept { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 0 0 14px; }
+  .concept p { margin: 0; padding-left: 12px; border-left: 3px solid var(--copper); font-size: 15px; }
+  .concept p + p { border-left-color: var(--blue); color: var(--muted); }
+  .concept b { color: var(--ink); }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+  .pad { padding: 12px 14px; }
+  main {
+    display: grid;
+    grid-template-columns: minmax(340px, 1fr) minmax(440px, 540px);
+    gap: 14px;
+    align-items: start;
+  }
+  .map-card { padding: 12px; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button, .ghost {
+    border: 1px solid var(--line);
+    background: white;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 650;
+  }
+  .presets button.on { background: var(--teal); color: white; border-color: var(--teal); }
+  .ghost { background: transparent; }
+  .ghost:disabled { opacity: 0.45; cursor: default; }
+  svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; }
+  .plot { fill: #fcf9fb; stroke: var(--line); }
+  .grid { stroke: #e3e6ea; stroke-width: 1; }
+  .compass { fill: #6c757d; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+  .hit { fill: transparent; pointer-events: all; cursor: grab; }
+  .dot { fill: var(--teal); stroke: white; stroke-width: 2; }
+  .market.is-selected .dot { stroke: var(--copper); stroke-width: 3; }
+  .market text { font-size: 13px; font-weight: 700; fill: var(--ink); stroke: #fcf9fb; stroke-width: 4px; paint-order: stroke; }
+  .market .lv { font-size: 12px; font-weight: 500; fill: var(--muted); }
+  .pull { stroke: var(--teal); opacity: 0.28; }
+  .gap { stroke: var(--blue); stroke-dasharray: 5 4; stroke-width: 1.5; opacity: 0.7; }
+  .cog-cross { stroke: var(--copper); stroke-width: 2.5; }
+  .cog-core { fill: var(--copper); }
+  .tag { font-size: 12px; font-weight: 750; stroke: #fcf9fb; stroke-width: 4px; paint-order: stroke; }
+  .tag.cog { fill: var(--copper); }
+  .tag.trial { fill: var(--blue); }
+  .trial-box { fill: none; stroke: var(--blue); stroke-width: 2.5; }
+  .note { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: #f8f9fa; font-size: 14.5px; }
+  .note.alert { background: var(--copper-soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; display: inline-block; }
+  .swatch.dot { border-radius: 50%; background: var(--teal); }
+  .swatch.cog { border: 2px solid var(--copper); border-radius: 50%; }
+  .swatch.trial { border: 2px solid var(--blue); }
+  .calc { display: flex; flex-direction: column; gap: 10px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { text-align: right; padding: 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th:first-child, td:first-child, .left { text-align: left; }
+  thead th { color: var(--muted); font-size: 13px; font-weight: 600; }
+  tr.is-selected th, tr.is-selected td { background: #f8f9fa; }
+  tr.is-hot th, tr.is-hot td { background: var(--copper-soft); }
+  tr.result th, tr.result td { background: var(--copper-soft); font-weight: 750; }
+  td input {
+    width: 64px; border: 1px solid var(--line); background: white; border-radius: 6px;
+    padding: 4px 6px; text-align: right;
+  }
+  .eq { min-height: 3.2em; margin-top: 6px; overflow-x: auto; overflow-y: hidden; }
+  .eq .katex-display { margin: 6px 0; text-align: left; }
+  .eq .katex-display > .katex { text-align: left; }
+  .eq .katex-display.fleqn > .katex { padding-left: 0; }
+  .key { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+  #path-panel { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 14.5px; }
+  #path-panel p { margin: 0; }
+  #path-intro { color: var(--muted); }
+  #path-steps { margin: 0; padding-left: 18px; }
+  #path-steps li + li { margin-top: 2px; }
+  #path-why { margin-top: 6px !important; font-weight: 650; }
+  .score-row { display: flex; gap: 8px; margin: 8px 0; }
+  .score { flex: 1; background: white; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+  .score b { display: block; color: var(--blue); font-size: 24px; letter-spacing: -0.03em; line-height: 1.1; }
+  .score span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .read { margin: 8px 0; font-size: 14.5px; }
+  .good { color: var(--good); }
+  details > summary { cursor: pointer; font-weight: 650; }
+  details > p, details > ol { margin: 8px 0 0; font-size: 14.5px; }
+  details ol { padding-left: 20px; }
+  details li + li { margin-top: 6px; }
+  .textish { border: 0; background: transparent; color: var(--teal); padding: 0; font-weight: 750; text-decoration: underline; }
+  footer { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 900px) {
+    .concept, main { grid-template-columns: 1fr; }
+    header h1 { font-size: 26px; }
+  }
+  @media (min-width: 901px) {
+    .map-card { position: sticky; top: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Center of gravity</h1>
+    <p class="kicker">Topic 6A · Network footprint design</p>
+  </header>
+
+  <section class="concept">
+    <p><b>The idea.</b> Picture the map as a board with a weight on each market. The center of gravity is where the board balances: the volume-weighted average position. Twice the volume counts twice as much, wherever the market sits.</p>
+    <p><b>The limit.</b> It gives a first pin, not a site. It does not necessarily minimise distance or cost, and it ignores roads, borders, capacity, service times, risk, labour and real buildings. Test those afterwards on real candidates.</p>
+  </section>
+
+  <section class="card pad activity" aria-labelledby="activity-title">
+    <h2 id="activity-title">Booklet activity: predict, test, explain</h2>
+    <ol>
+      <li>Select <button type="button" class="textish" data-preset="regions">Five markets</button>. Before editing, predict where the pin moves if East's volume increases.</li>
+      <li>In the table, change East's volume (<strong>w</strong>) from <strong>40 to 90</strong>. Observe the pin and explain why it moves towards East without reaching it.</li>
+      <li>Select <button type="button" class="textish" data-preset="coasts">Two coasts</button>. Give two practical checks needed before recommending a warehouse site.</li>
+    </ol>
+    <p><strong>Takeaway:</strong> the calculation finds a weighted middle; the site decision needs practical checks. Use Reset to restore the selected example.</p>
+  </section>
+
+  <main>
+    <section class="card map-card" aria-label="Sketch map">
+      <div class="preset-row">
+        <div class="presets" role="group" aria-label="Examples">
+          <button type="button" data-preset="regions">Five markets</button>
+          <button type="button" data-preset="coasts">Two coasts</button>
+          <button type="button" data-preset="distant">Distant market</button>
+        </div>
+        <button type="button" class="ghost" id="reset">Reset</button>
+      </div>
+      <svg id="map" viewBox="-70 -28 640 470" role="img" aria-labelledby="map-title">
+        <title id="map-title">Sketch map of markets, the center of gravity, and a trial site</title>
+        <rect class="plot" x="0" y="0" width="500" height="400"></rect>
+        <g id="grid"></g>
+        <text class="compass" x="250" y="18" text-anchor="middle">NORTH</text>
+        <text class="compass" x="250" y="392" text-anchor="middle">SOUTH</text>
+        <text class="compass" x="12" y="206">WEST</text>
+        <text class="compass" x="488" y="206" text-anchor="end">EAST</text>
+        <g id="links"></g>
+        <line id="gap" class="gap" x1="0" y1="0" x2="0" y2="0"></line>
+        <g id="markets"></g>
+        <g id="cog" pointer-events="none">
+          <line class="cog-cross" x1="-13" y1="0" x2="13" y2="0"></line>
+          <line class="cog-cross" x1="0" y1="-13" x2="0" y2="13"></line>
+          <circle class="cog-core" r="3.5"></circle>
+          <text class="tag cog" text-anchor="middle"></text>
+        </g>
+        <g id="trial">
+          <circle class="hit" r="20"></circle>
+          <rect class="trial-box" x="-9" y="-9" width="18" height="18" rx="2"></rect>
+          <text class="tag trial"></text>
+        </g>
+      </svg>
+      <p class="note" id="note"></p>
+      <ul class="legend">
+        <li><i class="swatch dot"></i> Market, sized by volume</li>
+        <li><i class="swatch cog"></i> Center of gravity</li>
+        <li><i class="swatch trial"></i> Trial site (drag)</li>
+      </ul>
+    </section>
+
+    <section class="calc" aria-label="Calculation">
+      <div class="card pad">
+        <p class="key">Edit x or y to move a market, or w to change its delivery volume. Use the same volume unit and time period for all markets. The formulas below show the calculation for each axis.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="left">Market</th>
+                <th data-tex="x_i">x</th>
+                <th data-tex="y_i">y</th>
+                <th data-tex="w_i">w</th>
+                <th data-tex="x_i w_i">xw</th>
+                <th data-tex="y_i w_i">yw</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+            <tfoot>
+              <tr>
+                <th class="left">Totals</th>
+                <td></td><td></td>
+                <td id="tot-w"></td>
+                <td id="tot-x"></td>
+                <td id="tot-y"></td>
+              </tr>
+              <tr class="result">
+                <th class="left">Center of gravity</th>
+                <td id="res-x"></td>
+                <td id="res-y"></td>
+                <td colspan="3" class="left">totals ÷ total volume</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="eq" id="x-eq"></div>
+        <div class="eq" id="y-eq"></div>
+        <p class="key"><span data-tex="x_i,\ y_i">xᵢ, yᵢ</span> = position of market <span data-tex="i">i</span> · <span data-tex="w_i">wᵢ</span> = its volume · <span data-tex="\Sigma">Σ</span> = add all markets</p>
+
+        <div id="path-panel">
+          <p id="path-intro">Edit a white cell or drag a market. This panel shows what recalculated.</p>
+          <ol id="path-steps" hidden>
+            <li></li><li></li><li></li><li></li>
+          </ol>
+          <p id="path-why" hidden></p>
+        </div>
+      </div>
+
+      <details class="card pad">
+        <summary>Optional extension: test straight-line burden</summary>
+        <p>Burden = <span data-tex="\sum_i w_i\,d_i">Σ wᵢ dᵢ</span>, with <span data-tex="d_i">dᵢ</span> the straight-line distance from market <span data-tex="i">i</span> to the site on this sketch. Lower is lighter. It is not a freight bill.</p>
+        <div class="score-row">
+          <div class="score"><span>At the center of gravity</span><b id="score-cog">n/a</b></div>
+          <div class="score"><span>At the trial site</span><b id="score-trial">n/a</b></div>
+        </div>
+        <p class="read" id="burden-read"></p>
+        <button type="button" class="ghost" id="snap">Put trial site on the center of gravity</button>
+        <p>The average minimises <span data-tex="\sum_i w_i\,d_i^{2}">Σ wᵢ dᵢ²</span> (squared distance), not <span data-tex="\sum_i w_i\,d_i">Σ wᵢ dᵢ</span> and not money. That is why a nearby site can score better.</p>
+      </details>
+
+      <details class="card pad">
+        <summary>Optional extension: two more experiments</summary>
+        <ol>
+          <li>Select <button type="button" class="textish" data-preset="regions">Five markets</button>. Predict what happens if you change only North's y. Test it and explain why the x average stays unchanged.</li>
+          <li>Select <button type="button" class="textish" data-preset="distant">Distant market</button> and open the straight-line burden panel. Compare the trial site with the calculated pin. Explain why a weighted middle is not necessarily the lowest-distance location.</li>
+        </ol>
+      </details>
+    </section>
+  </main>
+
+  <footer>Classroom sketch. Coordinates are not miles, kilometres or degrees; x grows east, y grows north. Not a site recommendation.</footer>
+</div>
+<noscript>This page needs JavaScript to recalculate the center of gravity.</noscript>
+
+<script>
+const MAP_H = 400;
+const SVGNS = "http://www.w3.org/2000/svg";
+const PRESETS = {
+  regions: {
+    label: "Five markets",
+    tone: "calm",
+    note: "Start here. The pin is the weighted average of these five markets. It does not have to sit on a customer, and it is not yet a warehouse.",
+    trial: "cog",
+    markets: [
+      { name: "North", x: 160, y: 330, w: 20 },
+      { name: "East", x: 450, y: 200, w: 40 },
+      { name: "South", x: 280, y: 50, w: 18 },
+      { name: "West", x: 60, y: 160, w: 25 },
+      { name: "Midlands", x: 220, y: 180, w: 15 }
+    ]
+  },
+  coasts: {
+    label: "Two coasts",
+    tone: "alert",
+    note: "Both coasts pull, so the average falls in the empty middle. The arithmetic can be right and the location still wrong. The formula cannot see a road, labour, or a building.",
+    trial: { x: 450, y: 290 },
+    markets: [
+      { name: "Northwest", x: 60, y: 300, w: 42 },
+      { name: "Southwest", x: 80, y: 60, w: 30 },
+      { name: "Northeast", x: 450, y: 290, w: 46 },
+      { name: "Southeast", x: 440, y: 70, w: 36 },
+      { name: "Inland", x: 200, y: 330, w: 8 }
+    ]
+  },
+  distant: {
+    label: "Distant market",
+    tone: "alert",
+    note: "Outpost is not the biggest account (about a fifth of the volume), but it sits far out, like a child at the end of a seesaw, so it drags the pin into the empty gap. The trial site sits on Metro, with the main customers. Compare the two scores.",
+    trial: { x: 360, y: 210 },
+    markets: [
+      { name: "Metro", x: 360, y: 210, w: 30 },
+      { name: "Harbor", x: 455, y: 230, w: 34 },
+      { name: "Valley", x: 410, y: 100, w: 24 },
+      { name: "Plains", x: 330, y: 280, w: 28 },
+      { name: "Outpost", x: 20, y: 200, w: 28 }
+    ]
+  }
+};
+
+let markets = [];
+let trial = { x: 250, y: 200 };
+let trialFollows = true;
+let activeId = "regions";
+let selected = 0;
+let lastEdit = null;
+let editOrigin = null;
+let pendingOrigin = null;
+let drag = null;
+const rowEls = [];
+const marketEls = [];
+
+const $ = (id) => document.getElementById(id);
+
+function svg(name, attrs, parent) {
+  const node = document.createElementNS(SVGNS, name);
+  for (const [k, v] of Object.entries(attrs || {})) node.setAttribute(k, v);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+function fmt(n, d) {
+  if (!Number.isFinite(n)) return "n/a";
+  return n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function fmtFlex(n) {
+  if (!Number.isFinite(n)) return "n/a";
+  return (Math.round(n * 100) / 100).toLocaleString("en-GB", { maximumFractionDigits: 2 });
+}
+function fmtMaybe(n, d) {
+  if (!Number.isFinite(n)) return "n/a";
+  const rounded = Number(n.toFixed(d));
+  return Number.isInteger(rounded) ? fmt(rounded, 0) : fmt(n, d);
+}
+function inputString(n) { return String(Math.round(n * 100) / 100); }
+function compute() {
+  let w = 0, sx = 0, sy = 0;
+  for (const m of markets) {
+    w += m.w; sx += m.x * m.w; sy += m.y * m.w;
+  }
+  return { w, sx, sy, x: w > 0 ? sx / w : null, y: w > 0 ? sy / w : null };
+}
+function snapshot() {
+  return { markets: markets.map((m) => ({ ...m })), trial: { ...trial }, cog: compute() };
+}
+function plotOf(x, yNorth) { return { x, y: MAP_H - yNorth }; }
+function compass(dx, dy) {
+  if (Math.hypot(dx, dy) < 0.4) return "almost not at all";
+  const h = Math.abs(dx) < 0.4 ? "" : dx > 0 ? "east" : "west";
+  const v = Math.abs(dy) < 0.4 ? "" : dy > 0 ? "north" : "south";
+  return h && v ? v + " and " + h : (h || v);
+}
+function burdenAt(pin) {
+  const rows = markets.map((m) => {
+    const dist = Math.hypot(m.x - pin.x, m.y - pin.y);
+    return { name: m.name, dist, score: m.w * dist, w: m.w };
+  });
+  return { total: rows.reduce((s, r) => s + r.score, 0), rows };
+}
+
+function typeset(node, src, plain, display) {
+  if (window.katex) {
+    try {
+      katex.render(src, node, { displayMode: display, fleqn: display, throwOnError: false });
+      return;
+    } catch (err) {}
+  }
+  node.textContent = plain;
+}
+function typesetStatic() {
+  document.querySelectorAll("[data-tex]").forEach((el) => typeset(el, el.dataset.tex, el.textContent, false));
+}
+function setEquation(node, axis, sum, w, result) {
+  if (w <= 0) { node.textContent = "Enter a volume above zero."; return; }
+  const tex = (s) => s.replace(/,/g, "{,}");
+  const src = "\\bar{" + axis + "}=\\frac{\\sum_i " + axis + "_i w_i}{\\sum_i w_i}=\\frac{" + tex(fmtFlex(sum)) + "}{" + tex(fmtFlex(w))
+    + "}=\\color{#d63384}{\\mathbf{" + tex(fmtMaybe(result, 1)) + "}}";
+  const plain = axis + "\u0304 = Σ " + axis + "ᵢwᵢ / Σ wᵢ = " + fmtFlex(sum) + " ÷ " + fmtFlex(w) + " = " + fmtMaybe(result, 1);
+  typeset(node, src, plain, true);
+}
+
+function drawGrid() {
+  const g = $("grid");
+  for (let x = 100; x < 500; x += 100) svg("line", { class: "grid", x1: x, y1: 0, x2: x, y2: 400 }, g);
+  for (let y = 100; y < 400; y += 100) svg("line", { class: "grid", x1: 0, y1: y, x2: 500, y2: y }, g);
+}
+function buildMarkets() {
+  const host = $("markets");
+  const links = $("links");
+  for (let i = 0; i < 5; i++) {
+    const line = svg("line", { class: "pull" }, links);
+    const group = svg("g", { class: "market" }, host);
+    const hit = svg("circle", { class: "hit", r: 22, cx: 0, cy: 0 }, group);
+    const dot = svg("circle", { class: "dot", r: 10, cx: 0, cy: 0 }, group);
+    const text = svg("text", {}, group);
+    const name = svg("tspan", { class: "ln" }, text);
+    const vol = svg("tspan", { class: "lv" }, text);
+    hit.addEventListener("pointerdown", (e) => startDrag(e, "market", i));
+    marketEls.push({ group, dot, text, name, vol, line });
+  }
+  $("trial").addEventListener("pointerdown", (e) => startDrag(e, "trial", -1));
+  window.addEventListener("pointermove", onDrag);
+  window.addEventListener("pointerup", endDrag);
+}
+function buildTable() {
+  const tb = $("tbody");
+  for (let i = 0; i < 5; i++) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<th scope="row" class="left nm"></th>'
+      + '<td><input type="number" min="0" max="500" step="any"></td>'
+      + '<td><input type="number" min="0" max="400" step="any"></td>'
+      + '<td><input type="number" min="0" max="999" step="any"></td>'
+      + '<td class="xw"></td><td class="yw"></td>';
+    tb.appendChild(tr);
+    const inputs = tr.querySelectorAll("input");
+    ["x", "y", "w"].forEach((field, k) => {
+      inputs[k].dataset.i = i;
+      inputs[k].dataset.f = field;
+      inputs[k].addEventListener("focus", () => {
+        selected = i;
+        pendingOrigin = snapshot();
+        render();
+      });
+      inputs[k].addEventListener("input", onType);
+      inputs[k].addEventListener("blur", () => { if (inputs[k].value.trim() === "") inputs[k].value = inputString(markets[i][field]); });
+      inputs[k].addEventListener("wheel", () => inputs[k].blur(), { passive: true });
+    });
+    tr.addEventListener("click", () => { selected = i; render(); });
+    rowEls.push({
+      tr,
+      name: tr.querySelector(".nm"),
+      inputs,
+      xw: tr.querySelector(".xw"),
+      yw: tr.querySelector(".yw")
+    });
+  }
+}
+
+function applyPreset(id) {
+  const preset = PRESETS[id];
+  if (!preset) return;
+  activeId = id;
+  markets = preset.markets.map((m) => ({ ...m }));
+  const c = compute();
+  trialFollows = preset.trial === "cog";
+  trial = trialFollows ? { x: c.x, y: c.y } : { ...preset.trial };
+  selected = markets.reduce((best, m, i) => m.w > markets[best].w ? i : best, 0);
+  lastEdit = null;
+  editOrigin = null;
+  pendingOrigin = null;
+  render();
+}
+function onType(e) {
+  const i = +e.target.dataset.i;
+  const field = e.target.dataset.f;
+  const raw = e.target.value.trim();
+  if (raw === "" || raw === "-" || raw === ".") return;
+  let n = Number(raw);
+  if (!Number.isFinite(n)) return;
+  const max = field === "w" ? 999 : field === "x" ? 500 : 400;
+  if (n < 0 || n > max) {
+    n = clamp(n, 0, max);
+    e.target.value = inputString(n);
+  }
+  if (markets[i][field] === n) return;
+  if (pendingOrigin) { editOrigin = pendingOrigin; pendingOrigin = null; }
+  if (!editOrigin) editOrigin = snapshot();
+  markets[i][field] = n;
+  selected = i;
+  lastEdit = { index: i, field };
+  render();
+}
+function startDrag(e, kind, index) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  drag = { kind, index, moved: false };
+  pendingOrigin = snapshot();
+  if (kind === "market") selected = index;
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+  render();
+}
+function clientToMap(e) {
+  const svgEl = $("map");
+  const pt = svgEl.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  const p = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  return { x: clamp(p.x, 16, 484), y: clamp(MAP_H - p.y, 16, 384) };
+}
+function onDrag(e) {
+  if (!drag) return;
+  const p = clientToMap(e);
+  if (drag.kind === "market") {
+    const m = markets[drag.index];
+    const nx = Math.round(p.x), ny = Math.round(p.y);
+    if (nx === m.x && ny === m.y) return;
+    if (!drag.moved) { editOrigin = pendingOrigin; pendingOrigin = null; drag.moved = true; }
+    m.x = nx; m.y = ny;
+    lastEdit = { index: drag.index, field: "pos" };
+  } else {
+    const nx = Math.round(p.x), ny = Math.round(p.y);
+    if (nx === Math.round(trial.x) && ny === Math.round(trial.y) && drag.moved) return;
+    if (!drag.moved) { editOrigin = pendingOrigin; pendingOrigin = null; drag.moved = true; }
+    trialFollows = false;
+    trial.x = nx; trial.y = ny;
+    lastEdit = { index: -1, field: "trial" };
+  }
+  render();
+}
+function endDrag() {
+  if (drag && !drag.moved) pendingOrigin = null;
+  drag = null;
+}
+
+function describe(c) {
+  const intro = $("path-intro");
+  const steps = $("path-steps");
+  const why = $("path-why");
+  const trialMove = !!lastEdit && lastEdit.field === "trial";
+  if (!lastEdit || !editOrigin || trialMove) {
+    intro.hidden = trialMove;
+    steps.hidden = true;
+    why.hidden = !trialMove;
+    if (trialMove) {
+      why.textContent = c.x === null
+        ? "You moved the trial site. There is still no center of gravity until some volume is above zero."
+        : "You moved the trial site only. The center of gravity is still (" + fmtMaybe(c.x, 1) + ", " + fmtMaybe(c.y, 1) + "). No product, total, or average changed. The burden score uses distance, and this formula does not.";
+    }
+    return;
+  }
+  intro.hidden = true;
+  steps.hidden = false;
+  why.hidden = false;
+
+  const i = lastEdit.index;
+  const before = editOrigin.markets[i];
+  const after = markets[i];
+  const old = editOrigin.cog;
+  const name = after.name;
+  const oldShare = old.w > 0 ? 100 * before.w / old.w : 0;
+  const newShare = c.w > 0 ? 100 * after.w / c.w : 0;
+  const arrow = (a, b, d = 1) => fmtMaybe(a, d) + " → " + fmtMaybe(b, d);
+  const same = (a, b) => Math.abs(a - b) < 0.001;
+
+  const bits = [];
+  bits.push("1 · " + name + " x " + (same(before.x, after.x) ? "unchanged at " + fmtFlex(after.x) : arrow(before.x, after.x, 0))
+    + ". y " + (same(before.y, after.y) ? "unchanged at " + fmtFlex(after.y) : arrow(before.y, after.y, 0))
+    + ". Volume " + (same(before.w, after.w) ? "unchanged at " + fmtFlex(after.w) : arrow(before.w, after.w, 0))
+    + ".");
+  bits.push("2 · x × w " + (same(before.x * before.w, after.x * after.w) ? "unchanged at " + fmtFlex(after.x * after.w) : arrow(before.x * before.w, after.x * after.w))
+    + ". y × w " + (same(before.y * before.w, after.y * after.w) ? "unchanged at " + fmtFlex(after.y * after.w) : arrow(before.y * before.w, after.y * after.w))
+    + ". Other markets were not recalculated.");
+  bits.push("3 · Σ x×w " + arrow(old.sx, c.sx) + ". Σ y×w " + arrow(old.sy, c.sy) + ". Total volume " + arrow(old.w, c.w, 0) + ".");
+  bits.push(c.x === null || old.x === null
+    ? "4 · The average needs total volume above zero."
+    : "4 · x̄ " + arrow(old.x, c.x) + ". ȳ " + arrow(old.y, c.y) + ".");
+  steps.querySelectorAll("li").forEach((li, k) => { li.textContent = bits[k]; });
+
+  if (c.x === null) {
+    why.textContent = "There is no center of gravity until at least one volume is above zero.";
+    return;
+  }
+  if (lastEdit.field === "w") {
+    if (after.w === 0 && before.w > 0) {
+      why.textContent = "Cutting " + name + " to zero removed it from the average. The pin is now the average of the markets that still have volume.";
+    } else if (before.w === 0 && after.w > 0) {
+      why.textContent = name + " now has volume, so its coordinates enter the average and pull the pin toward " + name + ".";
+    } else if (after.w > before.w) {
+      why.textContent = "Adding volume at " + name + " pulled the pin toward " + name + ". Its share went from " + fmtMaybe(oldShare, 1) + "% to " + fmtMaybe(newShare, 1) + "%.";
+    } else {
+      why.textContent = "Cutting volume at " + name + " let the other markets pull the pin away from it. Its share went from " + fmtMaybe(oldShare, 1) + "% to " + fmtMaybe(newShare, 1) + "%.";
+    }
+    return;
+  }
+  if (after.w <= 0 || c.w <= 0) {
+    why.textContent = name + " has no volume, so moving it does not shift the average. A zero-volume market drops out.";
+    return;
+  }
+  const moved = Math.hypot(after.x - before.x, after.y - before.y);
+  const cogMoved = old.x === null ? 0 : Math.hypot(c.x - old.x, c.y - old.y);
+  const share = after.w / c.w;
+  if (share > 0.999) {
+    why.textContent = name + " is all of the volume, so the pin sits on it and moves with it.";
+    return;
+  }
+  const dir = old.x === null ? "" : " The pin moved " + compass(c.x - old.x, c.y - old.y) + ".";
+  why.textContent = name + " is " + fmtMaybe(share * 100, 1) + "% of volume, so the pin moved " + fmtMaybe(cogMoved, 1)
+    + " sketch units, exactly that share of the market’s " + fmtMaybe(moved, 1) + "-unit move, not the whole way." + dir;
+}
+
+function render() {
+  const c = compute();
+  if (trialFollows && c.x !== null) trial = { x: c.x, y: c.y };
+  const preset = PRESETS[activeId];
+  document.querySelectorAll(".presets button").forEach((btn) => {
+    const on = btn.dataset.preset === activeId;
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const note = $("note");
+  note.textContent = preset.note;
+  note.classList.toggle("alert", preset.tone === "alert");
+
+  const maxW = Math.max(...markets.map((m) => m.w), 1);
+  markets.forEach((m, i) => {
+    const el = marketEls[i];
+    const p = plotOf(m.x, m.y);
+    el.group.setAttribute("transform", "translate(" + p.x + " " + p.y + ")");
+    el.group.classList.toggle("is-selected", i === selected);
+    const r = m.w <= 0 ? 6 : Math.min(26, 8 + Math.sqrt(m.w) * 2);
+    el.dot.setAttribute("r", r);
+    el.dot.setAttribute("opacity", m.w <= 0 ? "0.35" : "1");
+    const left = m.x > 455;
+    const below = p.y < 36;
+    el.text.setAttribute("text-anchor", left ? "end" : "start");
+    const lx = left ? -22 : 22;
+    const ly = below ? 16 : -8;
+    el.name.setAttribute("x", lx);
+    el.name.setAttribute("y", ly);
+    el.name.textContent = m.name;
+    el.vol.setAttribute("x", lx);
+    el.vol.setAttribute("y", ly + 15);
+    el.vol.textContent = m.w > 0 ? "vol " + fmtFlex(m.w) : "no volume";
+    if (c.x === null || m.w <= 0) {
+      el.line.setAttribute("opacity", "0");
+    } else {
+      const cp = plotOf(c.x, c.y);
+      el.line.setAttribute("x1", p.x);
+      el.line.setAttribute("y1", p.y);
+      el.line.setAttribute("x2", cp.x);
+      el.line.setAttribute("y2", cp.y);
+      el.line.setAttribute("stroke-width", String(1 + 8 * (m.w / maxW)));
+      el.line.setAttribute("opacity", i === selected ? "0.55" : "0.28");
+    }
+  });
+
+  const cog = $("cog");
+  const cogText = cog.querySelector("text");
+  if (c.x === null) {
+    cog.setAttribute("display", "none");
+  } else {
+    const cp = plotOf(c.x, c.y);
+    cog.removeAttribute("display");
+    cog.setAttribute("transform", "translate(" + cp.x + " " + cp.y + ")");
+    cogText.setAttribute("y", cp.y < 28 ? 28 : -18);
+    cogText.textContent = "Center of gravity  " + fmtMaybe(c.x, 1) + ", " + fmtMaybe(c.y, 1);
+  }
+
+  const tp = plotOf(trial.x, trial.y);
+  $("trial").setAttribute("transform", "translate(" + tp.x + " " + tp.y + ")");
+  const trialText = $("trial").querySelector("text");
+  const onPin = c.x !== null && Math.hypot(trial.x - c.x, trial.y - c.y) < 0.8;
+  trialText.setAttribute("display", onPin ? "none" : "");
+  trialText.setAttribute("text-anchor", trial.x > 430 ? "end" : "start");
+  trialText.setAttribute("x", trial.x > 430 ? -16 : 16);
+  trialText.setAttribute("y", 5);
+  trialText.textContent = "Trial site";
+  const gap = $("gap");
+  if (c.x === null || onPin) gap.setAttribute("display", "none");
+  else {
+    const cp = plotOf(c.x, c.y);
+    gap.removeAttribute("display");
+    gap.setAttribute("x1", cp.x); gap.setAttribute("y1", cp.y);
+    gap.setAttribute("x2", tp.x); gap.setAttribute("y2", tp.y);
+  }
+
+  setEquation($("x-eq"), "x", c.sx, c.w, c.x);
+  setEquation($("y-eq"), "y", c.sy, c.w, c.y);
+  describe(c);
+
+  markets.forEach((m, i) => {
+    const row = rowEls[i];
+    const hot = lastEdit && lastEdit.index === i;
+    row.tr.classList.toggle("is-selected", i === selected);
+    row.tr.classList.toggle("is-hot", !!hot && lastEdit.field !== "trial");
+    row.name.textContent = m.name;
+    setInput(row.inputs[0], m.x);
+    setInput(row.inputs[1], m.y);
+    setInput(row.inputs[2], m.w);
+    row.inputs[0].setAttribute("aria-label", m.name + " east-west coordinate");
+    row.inputs[1].setAttribute("aria-label", m.name + " north-south coordinate");
+    row.inputs[2].setAttribute("aria-label", m.name + " volume");
+    row.xw.textContent = fmtFlex(m.x * m.w);
+    row.yw.textContent = fmtFlex(m.y * m.w);
+  });
+  $("tot-w").textContent = fmtFlex(c.w);
+  $("tot-x").textContent = fmtFlex(c.sx);
+  $("tot-y").textContent = fmtFlex(c.sy);
+  $("res-x").textContent = fmtMaybe(c.x, 1);
+  $("res-y").textContent = fmtMaybe(c.y, 1);
+
+  const snap = $("snap");
+  snap.disabled = c.x === null || onPin;
+  if (c.x === null) {
+    $("score-cog").textContent = "n/a";
+    $("score-trial").textContent = "n/a";
+    $("burden-read").textContent = "Add volume before comparing sites.";
+    return;
+  }
+  const cogB = burdenAt(c);
+  const trialB = burdenAt(trial);
+  $("score-cog").textContent = fmt(cogB.total, 0);
+  $("score-trial").textContent = fmt(trialB.total, 0);
+  const read = $("burden-read");
+  read.classList.remove("good");
+  if (cogB.total < 0.001 && trialB.total < 0.001) {
+    read.textContent = "Both scores are zero.";
+  } else if (onPin || Math.abs(trialB.total - cogB.total) / cogB.total < 0.005) {
+    read.textContent = "The trial site is on the pin, so the scores match. Drag the square off it. The average will stay still and the score will change. An equal score is not a minimised cost.";
+  } else if (trialB.total < cogB.total) {
+    const pct = (cogB.total - trialB.total) / cogB.total * 100;
+    read.textContent = "The trial site is " + fmtMaybe(pct, 1) + "% lighter on straight-line burden, and " + fmtMaybe(Math.hypot(trial.x - c.x, trial.y - c.y), 0) + " sketch units away. The center of gravity did not choose it. This method never compares burdens.";
+    read.classList.add("good");
+  } else {
+    const pct = (trialB.total - cogB.total) / cogB.total * 100;
+    read.textContent = "The trial site is " + fmtMaybe(pct, 1) + "% heavier on this score. Moving it does not move the pin. A heavier trial site does not prove the pin is the cheapest place to operate.";
+  }
+}
+
+function setInput(input, value) {
+  if (document.activeElement === input) return;
+  input.value = inputString(value);
+}
+
+function init() {
+  typesetStatic();
+  drawGrid();
+  buildMarkets();
+  buildTable();
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-preset]");
+    if (btn) applyPreset(btn.dataset.preset);
+  });
+  $("reset").addEventListener("click", () => applyPreset(activeId));
+  $("snap").addEventListener("click", () => {
+    const c = compute();
+    if (c.x === null || Math.hypot(trial.x - c.x, trial.y - c.y) < 0.5) return;
+    editOrigin = snapshot();
+    trialFollows = true;
+    trial = { x: c.x, y: c.y };
+    lastEdit = { index: -1, field: "trial" };
+    render();
+  });
+  applyPreset("regions");
+}
+init();
+</script>
+</body>
+</html>
