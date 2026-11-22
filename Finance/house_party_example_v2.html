@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Cash Flow Trap: A House Party Story</title>
+    <title>The Cash Flow Trap: A House Party Story (v3)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -313,14 +313,14 @@
 
         /* Timeline */
         .timeline {
-            margin-top: 40px;
+            margin-top: 28px;
         }
 
         .timeline-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 25px 0;
+            padding: 20px 0;
             border-bottom: 1px solid var(--border);
         }
 
@@ -330,19 +330,20 @@
 
         .timeline-item.danger {
             background: linear-gradient(90deg, #fff0f0 0%, white 100%);
-            padding: 25px 20px;
+            padding: 20px;
             margin: 0 -20px;
         }
 
         .timeline-item.success {
             background: linear-gradient(90deg, #f0faf5 0%, white 100%);
-            padding: 25px 20px;
+            padding: 20px;
             margin: 0 -20px;
         }
 
         .timeline-label {
             font-weight: 500;
             color: var(--text);
+            font-size: 1.05em;
         }
 
         .timeline-value {
@@ -372,6 +373,17 @@
             padding: 35px;
             margin: 30px 0;
             border-left: 4px solid var(--primary);
+        }
+
+        /* Slide 5 compact blocks */
+        .slide:nth-child(5) .content-block {
+            padding: 24px 30px;
+            margin: 14px 0;
+        }
+
+        .slide:nth-child(5) .content-block p {
+            margin-bottom: 0;
+            font-size: 1.1em;
         }
 
         /* List Styling */
@@ -426,24 +438,27 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 30px;
-            margin-top: 40px;
+            margin-top: 35px;
         }
 
         .business-card {
             background: white;
             border: 2px solid var(--border);
-            padding: 30px;
+            padding: 28px;
             border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
 
         .business-card h4 {
             color: var(--accent);
-            margin-bottom: 15px;
+            margin-bottom: 14px;
         }
 
-        .business-card {
-            position: relative;
-            overflow: hidden;
+        .business-card p {
+            font-size: 1.1em;
+            line-height: 1.6;
         }
 
         .card-math {
@@ -462,7 +477,8 @@
             justify-content: center;
         }
 
-        .business-card:hover .card-math {
+        .business-card:hover .card-math,
+        .business-card.show-math .card-math {
             opacity: 1;
         }
 
@@ -490,13 +506,15 @@
         }
 
         .card-math .math-row .math-label {
-            font-size: 0.9em;
+            font-size: 0.88em;
         }
 
         .card-math .math-row .math-val {
             font-family: 'IBM Plex Serif', serif;
             font-weight: 700;
             font-size: 1em;
+            white-space: nowrap;
+            margin-left: 10px;
         }
 
         .card-math .math-divider {
@@ -520,12 +538,19 @@
             font-size: 0.82em;
             color: var(--text-light);
             text-align: center;
-            margin-top: 18px;
+            margin-top: 16px;
             font-style: italic;
         }
 
         /* Slide 9 specific enhancements */
+        .slide:nth-child(9) .centered-content {
+            padding-top: 0;
+        }
+
         .slide:nth-child(9) .content-block {
+            padding: 22px 30px;
+            margin: 16px 0;
+            border-radius: 4px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
             transform: translateY(0);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -534,6 +559,30 @@
         .slide:nth-child(9) .content-block:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+        }
+
+        .scf-bridge {
+            margin-top: 24px;
+            padding: 18px 26px;
+            background: #ffffff;
+            border: 2px dashed var(--accent);
+            border-radius: 6px;
+        }
+
+        .scf-bridge-label {
+            font-size: 0.78em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .scf-bridge p {
+            font-size: 1.02em;
+            line-height: 1.5;
+            margin-bottom: 0;
+            color: var(--text);
         }
 
         /* Navigation */
@@ -595,18 +644,6 @@
             z-index: 2;
         }
 
-        /* Animations */
-        @keyframes slideIn {
-            from { 
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
         /* Accent Text */
         .accent { color: var(--accent); font-weight: 600; }
         .red { color: var(--accent-red); font-weight: 600; }
@@ -625,7 +662,7 @@
         <div class="centered-content">
             <h3>Supply Chain Finance Series</h3>
             <h1>The Cash Flow Trap</h1>
-            <p class="large-text">A house party story about why a profitable business can still leave you bankrupt.</p>
+            <p class="large-text">A house party story about why a profitable business can still run out of cash.</p>
             <p class="small-text" style="margin-top: 60px;">Use Arrow Keys ← → to Navigate</p>
         </div>
     </div>
@@ -645,17 +682,17 @@
                     <div class="stat-item">
                         <div class="stat-value red">€200</div>
                         <div class="stat-label">Costs</div>
-                        <p class="small-text" style="margin-top: 10px;">Beer & Snacks</p>
+                        <p class="small-text" style="margin-top: 10px;">Beer &amp; Snacks</p>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">€300</div>
                         <div class="stat-label">Revenue</div>
-                        <p class="small-text" style="margin-top: 10px;">Entry Tickets</p>
+                        <p class="small-text" style="margin-top: 10px;">Entry Tickets (50 × €6)</p>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value green">€100</div>
-                        <div class="stat-label">Profit</div>
-                        <p class="small-text" style="margin-top: 10px;">Net Margin</p>
+                        <div class="stat-label">Gross Profit</div>
+                        <p class="small-text" style="margin-top: 10px;">33% Gross Margin</p>
                     </div>
                 </div>
                 <p class="large-text" style="margin-top: 40px;">The plan: Buy the drinks. Guests pay an entry fee.</p>
@@ -671,31 +708,31 @@
             <div>
                 <div class="big-number">01</div>
                 <h3>Days Inventory Outstanding</h3>
-                <h2>Your Money is on the Fridge!</h2>
+                <h2>Your Money is in the Fridge!</h2>
                 <p class="large-text">You buy the beer on <strong>Monday</strong> because it's on sale. The party isn't until <strong>Friday</strong>.</p>
             </div>
             <div style="display: flex; flex-direction: column; justify-content: center;">
                 <div class="content-block">
                     <h4>The Reality</h4>
                     <p>For <span class="accent">4 days</span>, your cash is trapped in glass bottles sitting in your fridge.</p>
-                    <p style="margin-top: 20px;">You cannot use that money to pay rent. You cannot buy groceries. It is completely locked up in <strong>inventory</strong>.</p>
+                    <p style="margin-top: 20px; margin-bottom: 0;">You cannot use that money to pay rent. You cannot buy groceries. It is completely locked up in <strong>inventory</strong>.</p>
                 </div>
                 <div class="pull-quote" style="font-size: 1.5em; margin-top: 30px;">
-                    "Inventory is just cash wearing a different costume." 
+                    "Inventory is just cash wearing a different costume."
                 </div>
             </div>
         </div>
     </div>
 
-        <!-- SLIDE 4: Payables (DPO) -->
+    <!-- SLIDE 4: Payables (DPO) -->
     <div class="slide">
         <div class="slide-number">04</div>
         <div>
             <div style="max-width: 900px;">
                 <div class="big-number" style="margin-bottom: 10px;">02</div>
                 <h3 style="margin-bottom: 8px;">Days Payable Outstanding</h3>
-                <h2 style="margin-bottom: 12px;">When do I get paid?</h2>
-                <p class="large-text" style="margin-bottom: 25px;">Before we continue: let's understand how <strong>payment timing</strong> affects cash flow.</p>
+                <h2 style="margin-bottom: 12px;">When do I pay my suppliers?</h2>
+                <p class="large-text" style="margin-bottom: 25px;">Before we continue: let's see how <strong>supplier payment timing</strong> affects cash flow.</p>
             </div>
             
             <div class="comparison-grid" style="margin-top: 25px;">
@@ -713,7 +750,7 @@
                 </div>
             </div>
 
-            <p class="large-text" style="margin-top: 25px; margin-bottom: 8px;">Delaying payment to suppliers acts like a free loan. Companies negotiate <strong>payment terms</strong> (Net 30, Net 60) to keep cash longer.</p>
+            <p class="large-text" style="margin-top: 25px; margin-bottom: 8px;">Delaying payment to suppliers acts like short-term trade credit. Companies negotiate <strong>payment terms</strong> (Net 30, Net 60) to keep cash longer.</p>
             <p class="small-text" style="margin-top: 0; margin-bottom: 0; color: var(--text-light);">In your case, you paid immediately with a debit card, so your DPO = 0 days.</p>
         </div>
     </div>
@@ -724,26 +761,26 @@
         <div class="split-layout">
             <div style="display: flex; flex-direction: column; justify-content: center;">
                 <div class="content-block">
-                    <h4>Friday Night</h4>
-                    <p>The party happens. Everyone has a great time. You spend all the drinks.</p>
+                    <h4>Friday Night (Day 4)</h4>
+                    <p>The party happens. Everyone has a great time. You serve all the drinks.</p>
                 </div>
                 <div class="content-block" style="background: #fff8f0; border-color: #ff9900;">
-                    <h4>Sunday</h4>
-                    <p>You send a <strong>Tikkie</strong> to all your friends.</p>
+                    <h4>Sunday (Day 6)</h4>
+                    <p>You finally send a <strong>Tikkie</strong> to all your friends <em>(2 days of billing lag)</em>.</p>
                 </div>
                 <div class="content-block" style="background: #fff0f0; border-color: var(--accent-red);">
-                    <h4>The Following Friday</h4>
-                    <p>Your friends are slow. They finally pay up... <span class="red">7 days later</span>.</p>
+                    <h4>The Following Friday (Day 11)</h4>
+                    <p>Your friends are slow to pay. Cash finally arrives <span class="red">7 days after the party</span>.</p>
                 </div>
             </div>
             <div>
                 <div class="big-number">03</div>
                 <h3>Days Sales Outstanding</h3>
                 <h2>The Tikkie Lag</h2>
-                <div class="pull-quote" style="margin-top: 40px;">
+                <div class="pull-quote" style="margin-top: 35px;">
                     You made the "sale" on Friday, but you have zero cash for another full week.
                 </div>
-                <p class="large-text" style="margin-top: 30px;">This waiting period is called <strong>Receivables</strong>. You're owed money, but you can't spend promises.</p>
+                <p class="large-text" style="margin-top: 25px;">This waiting period is called <strong>Receivables</strong>. You're owed money, but you can't spend promises.</p>
             </div>
         </div>
     </div>
@@ -753,30 +790,31 @@
         <div class="slide-number">06</div>
         <div style="max-width: 1000px; margin: 0 auto;">
             <h2>Money Flow Timeline</h2>
-            <p class="large-text">Watch what happens to your bank account balance. Remember you started with €300:</p>
+            <p class="large-text">Watch what happens to your bank account balance. Remember you started with <strong>€250</strong>:</p>
             
             <div class="timeline">
                 <div class="timeline-item">
-                    <div class="timeline-label"><strong>Day 0 (Monday)</strong> — Buy Beer (Debit Card)</div>
+                    <div class="timeline-label"><strong>Day 0 (Monday)</strong> — Buy Beer with Debit Card (−€200)</div>
                     <div class="timeline-value red">€50 left</div>
                 </div>
                 <div class="timeline-item">
-                    <div class="timeline-label"><strong>Day 4 (Friday)</strong> — Party Happens!</div>
+                    <div class="timeline-label"><strong>Day 4 (Friday)</strong> — Party Happens! (Sale made, €0 cash in)</div>
                     <div class="timeline-value red">€50 left</div>
                 </div>
                 <div class="timeline-item danger">
-                    <div class="timeline-label"><strong>Day 5-10</strong> — Waiting for Tikkies...</div>
+                    <div class="timeline-label"><strong>Day 5–10</strong> — Waiting for Tikkies (€300 owed to you)</div>
                     <div class="timeline-value red">⚠ DANGER ZONE</div>
                 </div>
                 <div class="timeline-item success">
-                    <div class="timeline-label"><strong>Day 11 (Next Friday)</strong> — Friends Finally Pay</div>
+                    <div class="timeline-label"><strong>Day 11 (Next Friday)</strong> — Friends Finally Pay (+€300)</div>
                     <div class="timeline-value green">€350</div>
                 </div>
             </div>
 
-            <div class="pull-quote" style="margin-top: 60px; font-size: 1.8em;">
-                If your rent was due on Day 6, you are bankrupt, even though you made a profit.
+            <div class="pull-quote" style="margin-top: 35px; margin-bottom: 14px; font-size: 1.55em;">
+                If your rent is due on Day 6, you face a liquidity crunch and can't pay your bills—even though you made a €100 profit.
             </div>
+            <p class="small-text" style="margin-left: 34px; margin-bottom: 0;">In finance, running out of cash while still profitable is <strong>illiquidity</strong>—and prolonged illiquidity can force a profitable firm into bankruptcy.</p>
         </div>
     </div>
 
@@ -790,34 +828,33 @@
             
             <div class="formula-box" style="margin: 25px 0; padding: 30px;">
                 <div class="formula-label" style="margin-bottom: 5px;">The Formula</div>
-                <div class="formula" style="margin: 15px 0;">CCC = DIO + DSO - DPO</div>
+                <div class="formula" style="margin: 15px 0;">CCC = DIO + DSO − DPO</div>
                 <p style="margin-top: 15px; margin-bottom: 0; font-size: 0.9em; color: var(--text-light);">
-                    Days Inventory Outstanding + Days Sales Outstanding - Days Payable Outstanding
+                    Days Inventory Outstanding + Days Sales Outstanding − Days Payable Outstanding
                 </p>
             </div>
 
             <div class="content-block" style="margin-top: 25px; padding: 25px 35px;">
                 <h4 style="margin-bottom: 12px;">In the House Party Example</h4>
-                <p class="large-text" style="margin-bottom: 15px;"><strong>4 days</strong> (inventory) + <strong>7 days</strong> (waiting for payment) - <strong>0 days</strong> (paid immediately)</p>
+                <p class="large-text" style="margin-bottom: 15px;"><strong>4 days</strong> (inventory) + <strong>7 days</strong> (waiting for Tikkies) − <strong>0 days</strong> (paid immediately)</p>
                 <p class="large-text" style="margin-top: 0; margin-bottom: 0;">= <span class="red"><strong>11 days</strong></span> without cash</p>
             </div>
 
-            <p class="large-text" style="margin-top: 25px; margin-bottom: 0;">Companies optimize each part to improve cash flow!</p>
+            <p class="large-text" style="margin-top: 25px; margin-bottom: 0;">Companies optimize each part to shorten their cycle and free up cash!</p>
         </div>
     </div>
 
     <!-- SLIDE 8: Real Business Examples -->
     <div class="slide">
         <div class="slide-number">08</div>
-        <div style="max-width: 1100px; margin: 0 auto; padding-top: 50px;">
-            <h2>Cash Flow dynamics differ per industry</h2>
-            <!-- <p class="large-text">The same cash flow trap happens to companies every day.</p> -->
+        <div style="max-width: 1100px; margin: 0 auto; padding-top: 40px;">
+            <h2>Cash flow dynamics differ per industry</h2>
             
             <div class="business-examples">
                 <div class="business-card">
                     <h4>Retail Stores</h4>
-                    <p>Buy inventory 60 days before selling it. Pay suppliers in 30 days. Wait 7 days for customer payments.</p>
-                    <p style="margin-top: 15px;" class="red"><strong>CCC: ~37 days</strong></p>
+                    <p>Buy inventory 60 days before selling it. Pay suppliers in 30 days. Wait about a week for card settlements and invoices.</p>
+                    <p style="margin-top: 15px; margin-bottom: 0;" class="red"><strong>CCC: ~37 days</strong></p>
                     <div class="card-math">
                         <div class="math-title">How the math works</div>
                         <div class="math-row">
@@ -829,7 +866,7 @@
                             <span class="math-val">+7 days</span>
                         </div>
                         <div class="math-row">
-                            <span class="math-label">DPO &mdash; Delay paying suppliers</span>
+                            <span class="math-label">DPO &mdash; Pay suppliers later</span>
                             <span class="math-val">&minus;30 days</span>
                         </div>
                         <div class="math-divider"></div>
@@ -840,42 +877,42 @@
                     </div>
                 </div>
                 <div class="business-card">
-                    <h4>Tech Startups</h4>
-                    <p>Hire developers, build product for months. Revenue comes much later. Burn through cash despite having contracts.</p>
-                    <p style="margin-top: 15px;" class="red"><strong>CCC: 120+ days</strong></p>
+                    <h4>Heavy Manufacturing</h4>
+                    <p>Buys raw materials and builds complex machinery over months. Offers B2B buyers 60-day terms. Ties up massive working capital.</p>
+                    <p style="margin-top: 15px; margin-bottom: 0;" class="red"><strong>CCC: ~120 days</strong></p>
                     <div class="card-math">
                         <div class="math-title">How the math works</div>
                         <div class="math-row">
-                            <span class="math-label">DIO &mdash; Dev. phase as inventory</span>
+                            <span class="math-label">DIO &mdash; Raw materials &amp; WIP</span>
                             <span class="math-val">+90 days</span>
                         </div>
                         <div class="math-row">
-                            <span class="math-label">DSO &mdash; Enterprise payment terms</span>
+                            <span class="math-label">DSO &mdash; B2B payment terms</span>
                             <span class="math-val">+60 days</span>
                         </div>
                         <div class="math-row">
-                            <span class="math-label">DPO &mdash; Pay own vendors</span>
+                            <span class="math-label">DPO &mdash; Pay component suppliers</span>
                             <span class="math-val">&minus;30 days</span>
                         </div>
                         <div class="math-divider"></div>
                         <div class="math-result red">
                             <span>CCC</span>
-                            <span>= 120+ days</span>
+                            <span>= 120 days</span>
                         </div>
                     </div>
                 </div>
                 <div class="business-card">
-                    <h4>Amazon</h4>
-                    <p>Holds inventory 30+ days but gets customer money instantly. Pays suppliers in 90+ days.</p>
-                    <p style="margin-top: 15px;" class="green"><strong>CCC: -60 days!</strong></p>
+                    <h4>Amazon (Retail)</h4>
+                    <p>Holds warehouse stock ~35 days, collects shopper payments almost instantly, and pays suppliers in 90+ days.</p>
+                    <p style="margin-top: 15px; margin-bottom: 0;" class="green"><strong>CCC: −60 days!</strong></p>
                     <div class="card-math">
                         <div class="math-title">How the math works</div>
                         <div class="math-row">
-                            <span class="math-label">DIO &mdash; Inventory turnover</span>
+                            <span class="math-label">DIO &mdash; Warehouse turnover</span>
                             <span class="math-val">+35 days</span>
                         </div>
                         <div class="math-row">
-                            <span class="math-label">DSO &mdash; Customers pay instantly</span>
+                            <span class="math-label">DSO &mdash; Shoppers pay instantly</span>
                             <span class="math-val">+1 day</span>
                         </div>
                         <div class="math-row">
@@ -891,9 +928,9 @@
                 </div>
             </div>
 
-            <p class="source-note">* Figures are illustrative industry averages based on standard business school case studies. Hover over each card to see the math.</p>
+            <p class="source-note">* Figures are illustrative industry benchmarks (Amazon reflects its retail segment; consolidated Amazon has a higher DSO due to AWS). Hover or click each card to see the math.</p>
 
-            <div class="pull-quote" style="margin-top: 30px; font-size: 1.45em;">
+            <div class="pull-quote" style="margin-top: 28px; font-size: 1.45em;">
                 Profitable companies go bankrupt when they run out of cash, not when they run out of profit.
             </div>
         </div>
@@ -903,29 +940,33 @@
     <div class="slide">
         <div class="slide-number">09</div>
         <div class="centered-content">
-            <h2>Key Takeaways</h2>
-            <!-- <p class="large-text" style="margin-bottom: 50px;">Remember these three things:</p> -->
+            <h2 style="margin-bottom: 16px;">Key Takeaways</h2>
             
             <div class="content-block" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                <h4 style="color: white; font-size: 1.8em;">1. Profit ≠ Cash</h4>
-                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">You can be profitable on paper and still go bankrupt.</p>
+                <h4 style="color: white; font-size: 1.55em; margin-bottom: 6px;">1. Profit ≠ Cash</h4>
+                <p style="color: rgba(255,255,255,0.92); font-size: 1.1em; margin-bottom: 0;">You can be profitable on paper and still face a fatal liquidity crunch.</p>
             </div>
 
             <div class="content-block" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;">
-                <h4 style="color: white; font-size: 1.8em;">2. Timing Matters More Than Amounts</h4>
-                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">When cash moves is often more important than how much.</p>
+                <h4 style="color: white; font-size: 1.55em; margin-bottom: 6px;">2. Timing Matters as Much as Margin</h4>
+                <p style="color: rgba(255,255,255,0.92); font-size: 1.1em; margin-bottom: 0;">When cash moves is often just as critical as how much you earn.</p>
             </div>
 
-            <div class="content-block" style="background: linear-gradient(135deg, #0369a1 0%, #0891b2 100%); border: none; margin-bottom: 0;">
-                <h4 style="color: white; font-size: 1.8em;">3. Manage the Cycle</h4>
-                <p style="color: rgba(255,255,255,0.9); font-size: 1.2em; margin-top: 15px; margin-bottom: 0;">Buy late. Sell fast. Collect faster.</p>
+            <div class="content-block" style="background: linear-gradient(135deg, #0369a1 0%, #0891b2 100%); border: none;">
+                <h4 style="color: white; font-size: 1.55em; margin-bottom: 6px;">3. Manage All Three Levers</h4>
+                <p style="color: rgba(255,255,255,0.92); font-size: 1.1em; margin-bottom: 0;"><strong>Sell fast</strong> (↓ DIO). <strong>Collect faster</strong> (↓ DSO). <strong>Pay slower</strong> (↑ DPO).</p>
+            </div>
+
+            <div class="scf-bridge">
+                <div class="scf-bridge-label">Next in Supply Chain Finance →</div>
+                <p>Wait: if you pay your supplier 90 days late, you solve <em>your</em> cash flow trap—by pushing it onto <strong>them</strong>. How can Supply Chain Finance solutions help both sides win?</p>
             </div>
         </div>
     </div>
 
     <!-- Controls -->
-    <button class="nav-btn prev" onclick="moveSlide(-1)">‹</button>
-    <button class="nav-btn next" onclick="moveSlide(1)">›</button>
+    <button class="nav-btn prev" onclick="moveSlide(-1)" aria-label="Previous slide">‹</button>
+    <button class="nav-btn next" onclick="moveSlide(1)" aria-label="Next slide">›</button>
     <div class="progress-bar" id="progressBar"></div>
     <div class="footer-note">HZ University of Applied Sciences</div>
 
@@ -959,6 +1000,13 @@
         } else if (event.key === "ArrowLeft") {
             moveSlide(-1);
         }
+    });
+
+    // Allow tapping/clicking industry cards to toggle math on touch devices
+    document.querySelectorAll('.business-card').forEach(card => {
+        card.addEventListener('click', () => {
+            card.classList.toggle('show-math');
+        });
     });
 
     showSlide(0);
